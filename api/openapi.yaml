@@ -1,15 +1,15 @@
-# openGym HTTP API — hand-written OpenAPI 3.1 spec.
+# LiftBoi HTTP API — hand-written OpenAPI 3.1 spec.
 # Source of truth: api/server.js (a single framework-free Node file). Every route the
 # server registers is documented here; if you add a route there, add it here too.
-# Browsable version: https://opengym.duarte-santos.ch/api.html
+# Browsable version: https://liftboi.duarte-santos.ch/api.html
 openapi: 3.1.0
 
 info:
-  title: openGym API
+  title: LiftBoi API
   version: 1.3.5
-  summary: Passkey (WebAuthn) auth + per-user state storage for openGym
+  summary: Passkey (WebAuthn) auth + per-user state storage for LiftBoi
   description: |
-    The backend of [openGym](https://opengym.duarte-santos.ch) — a free, open-source
+    The backend of [LiftBoi](https://liftboi.duarte-santos.ch) — a free, open-source
     gym & body-weight tracker. One Node file, no framework, JSON-file storage,
     HMAC-signed session cookies.
 
@@ -58,13 +58,13 @@ info:
     name: AGPL-3.0-or-later
     identifier: AGPL-3.0-or-later
   contact:
-    name: openGym
-    url: https://gitlab.com/DuarteSantos8/opengym
+    name: LiftBoi
+    url: https://github.com/5anku/LiftBoi
 
 servers:
   - url: /
-    description: Same origin as the openGym web app (the normal deployment)
-  - url: https://opengym.example.com
+    description: Same origin as the LiftBoi web app (the normal deployment)
+  - url: https://liftboi.example.com
     description: Your self-hosted instance
 
 tags:

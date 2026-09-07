@@ -1,5 +1,9 @@
 # Changelog
 
+> LiftBoi is a fork of [openGym](https://gitlab.com/DuarteSantos8/opengym) by Duarte Santos,
+> forked at v1.3.5. Everything below this line predates the fork and describes openGym under
+> its original name — kept as-is for history rather than rewritten.
+
 ## v1.3.5 — 2026-09-06
 
 One bug, and the one everybody with the Android app and their own API key ran into. Web bundle and

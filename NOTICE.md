@@ -1,12 +1,13 @@
 # Third-party notices
 
-openGym — Copyright (C) 2026 Duarte Santos.
-openGym's own code is licensed under the **GNU AGPL v3.0** (see [LICENSE](LICENSE)).
+LiftBoi is a fork of **openGym** — Copyright (C) 2026 Duarte Santos, licensed under the
+**GNU AGPL v3.0** (see [LICENSE](LICENSE)). LiftBoi's own modifications on top of that base
+are Copyright (C) 2026 5anku, under the same license.
 
 ## App store exception
 
-As an additional permission under section 7 of the AGPL v3.0, the copyright holder permits
-distribution of the openGym mobile application through app store platforms (such as the
+As an additional permission under section 7 of the AGPL v3.0, the copyright holders permit
+distribution of the LiftBoi mobile application through app store platforms (such as the
 Apple App Store and Google Play) whose terms of service would otherwise be incompatible
 with the AGPL, provided the corresponding source code remains available under the AGPL at
 the project repository. This permission applies to the distribution channel only and does

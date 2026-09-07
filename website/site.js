@@ -1,15 +1,9 @@
-// Behaviour for the openGym site: the header's navigation sheet, the contents
+// Behaviour for the LiftBoi site: the header's navigation sheet, the contents
 // drawer and its scrollspy, the scroll reveals, the demo frame, and the two things
 // that come from the GitLab API (repo counts, release timeline).
 // Every one of them fails soft — the page is complete without any of this running.
 
-const GL_PROJECT = 'https://gitlab.com/api/v4/projects/DuarteSantos8%2Fopengym'
-
-// Discord publishes an invite's guild counts to anyone who asks for the invite with
-// ?with_counts=1 — no bot token, no widget to enable, and the API reflects the caller's
-// Origin, so the browser is allowed to read it. The code is the permanent invite in the
-// nav; if that invite is ever revoked this returns 404 and the count simply stays blank.
-const DC_INVITE = 'https://discord.com/api/v10/invites/e62jY6fwVb?with_counts=1'
+const GH_REPO = 'https://api.github.com/repos/5anku/LiftBoi'
 
 /* ------------------------------------------------------- one panel controller
    The navigation sheet and the contents drawer are the same object with different
@@ -210,7 +204,7 @@ function panel({ opener, panelEl, flag, closeBtn }) {
     slot.dataset.mounted = '1'
     const f = document.createElement('iframe')
     f.src = slot.dataset.demo
-    f.title = 'openGym live demo'
+    f.title = 'LiftBoi live demo'
     f.loading = 'lazy'
     f.style.cssText = 'width:100%;height:100%;border:0;display:block;border-radius:34px;background:#000'
     slot.appendChild(f)
@@ -226,88 +220,49 @@ function panel({ opener, panelEl, flag, closeBtn }) {
 })()
 
 /* ------------------------------------------------------- repo counts (nav + specs)
-   Points at gitlab.com while the GitHub account is suspended; switch the two API URLs
-   back to api.github.com once it is restored.
-
-   The cache keys carry a _gl suffix: a visitor with a still-warm sessionStorage entry
-   from the gitea era would otherwise be read with the old field names and show NaN. */
+   GitHub's own repo endpoint carries stars, forks and open issues in one unauthenticated,
+   CORS-enabled response — no second call needed. (open_issues_count also counts open PRs,
+   a GitHub quirk; close enough for a nav badge.) */
 ;(async () => {
   const set = (id, v) => document.querySelectorAll('[data-gh="' + id + '"]').forEach(el => { el.textContent = v })
   try {
     let d = null
-    const cached = sessionStorage.getItem('repo_meta_gl')
+    const cached = sessionStorage.getItem('repo_meta_gh')
     if (cached) d = JSON.parse(cached)
     else {
-      const r = await fetch(GL_PROJECT)
+      const r = await fetch(GH_REPO)
       if (!r.ok) return
       const j = await r.json()
-      // An unauthenticated project response carries star_count and forks_count and nothing
-      // else countable — open_issues_count is only there for a logged-in caller, so reading
-      // it here printed "undefined" on the live site. The issues endpoint answers it in the
-      // X-Total header instead, and GitLab lists that header in Access-Control-Expose-Headers,
-      // so the browser is allowed to read it. per_page=1 keeps the body to a single issue.
-      let issues = ''
-      try {
-        const ri = await fetch(GL_PROJECT + '/issues?state=opened&per_page=1')
-        if (ri.ok) issues = ri.headers.get('X-Total') || ''
-      } catch (e) { /* count stays blank rather than wrong */ }
-      d = { stars_count: j.star_count, forks_count: j.forks_count, open_issues_count: issues }
-      sessionStorage.setItem('repo_meta_gl', JSON.stringify(d))
+      d = { stars_count: j.stargazers_count, forks_count: j.forks_count, open_issues_count: j.open_issues_count }
+      sessionStorage.setItem('repo_meta_gh', JSON.stringify(d))
     }
     set('stars', '★ ' + d.stars_count)
     set('stars-n', d.stars_count)
     set('forks-n', d.forks_count)
-    // Leave the placeholder standing rather than writing an empty box.
     if (d.open_issues_count !== '' && d.open_issues_count != null) set('issues-n', d.open_issues_count)
   } catch (e) { /* offline / rate-limited — leave placeholders */ }
 })()
 
-/* --------------------------------------------------- Discord members (nav + specs)
-   Same shape as the repo counts above, and just as optional: the placeholder next to
-   the Discord link is empty, so a blocked or rate-limited request leaves the link
-   reading exactly as it did before anyone counted anything. */
-;(async () => {
-  const set = (id, v) => document.querySelectorAll('[data-dc="' + id + '"]').forEach(el => { el.textContent = v })
-  try {
-    let n = null
-    const cached = sessionStorage.getItem('discord_members')
-    if (cached) n = JSON.parse(cached)
-    else {
-      const r = await fetch(DC_INVITE)
-      if (!r.ok) return
-      const j = await r.json()
-      n = j.approximate_member_count
-      if (typeof n !== 'number') return
-      sessionStorage.setItem('discord_members', JSON.stringify(n))
-    }
-    // Grouped like the other four-figure numbers on the page (1,324 exercises).
-    const fmt = n.toLocaleString('en-US')
-    set('members', fmt)
-    set('members-n', fmt)
-  } catch (e) { /* offline / blocked — the link keeps its plain label */ }
-})()
-
 /* -------------------------------------------------------------- about timeline
-   Built from the published GitLab releases, so the page updates itself with every
+   Built from the published GitHub releases, so the page updates itself with every
    release. The static entries marked data-fallback stay in place when the API is
    unreachable; the hand-written first entry is always kept.
 
-   GitLab's release objects differ from Gitea's: the notes are `description` (not `body`),
-   the date is `released_at` (not `published_at`), the web link sits in `_links.self`, and
-   there is no draft/prerelease pair — a not-yet-released one is `upcoming_release`. */
+   GitHub's release objects: tag_name, name, published_at, body, html_url, and a draft/
+   prerelease pair for anything not meant on the public timeline. */
 ;(async () => {
   const tl = document.getElementById('milestones')
   if (!tl) return
   try {
     let rel = null
-    const cached = sessionStorage.getItem('repo_releases_gl')
+    const cached = sessionStorage.getItem('repo_releases_gh')
     if (cached) rel = JSON.parse(cached)
     else {
-      const r = await fetch(GL_PROJECT + '/releases?per_page=100')
+      const r = await fetch(GH_REPO + '/releases?per_page=100')
       if (!r.ok) return
-      rel = (await r.json()).filter(x => !x.upcoming_release)
-        .map(x => ({ tag: x.tag_name, name: x.name, at: x.released_at, body: x.description || '', url: (x._links && x._links.self) || ('https://gitlab.com/DuarteSantos8/opengym/-/releases/' + x.tag_name) }))
-      sessionStorage.setItem('repo_releases_gl', JSON.stringify(rel))
+      rel = (await r.json()).filter(x => !x.draft && !x.prerelease)
+        .map(x => ({ tag: x.tag_name, name: x.name, at: x.published_at, body: x.body || '', url: x.html_url }))
+      sessionStorage.setItem('repo_releases_gh', JSON.stringify(rel))
     }
     if (!rel.length) return
     const fmt = d => new Date(d).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })

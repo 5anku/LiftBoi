@@ -1,6 +1,6 @@
 {
-  "name": "openGym",
-  "short_name": "openGym",
+  "name": "LiftBoi",
+  "short_name": "LiftBoi",
   "description": "Personal gym & body weight tracker",
   "start_url": "./",
   "scope": "./",

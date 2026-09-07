@@ -31,7 +31,7 @@ export async function isAndroid() {
   }
 }
 
-const FILE = 'opengym-state.json'
+const FILE = 'liftboi-state.json'
 
 export async function nativeLoad() {
   try {
@@ -49,10 +49,10 @@ export async function nativeSave(state) {
 }
 
 // "Connect to my server" mode (lib/remote.js): which of local-only / a paired remote account this
-// device chose, kept in its own file — never inside opengym-state.json, since that file's content
+// device chose, kept in its own file — never inside liftboi-state.json, since that file's content
 // is exactly what pushState() PUTs to a server, and a device's own connection secret must never
 // travel as if it were training data.
-const REMOTE_FILE = 'opengym-remote.json'
+const REMOTE_FILE = 'liftboi-remote.json'
 
 // Small JSON files in the app's private data directory, for device facts that must not ride
 // in S (which syncs and exports): the pairing, and how the Coach runs on this phone.
@@ -179,7 +179,7 @@ export async function writeAutoBackup(state) {
   try {
     const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem')
     await Filesystem.writeFile({
-      path: `opengym-backup-${todayISO()}.json`,
+      path: `liftboi-backup-${todayISO()}.json`,
       directory: Directory.Documents,
       data: JSON.stringify(state),
       encoding: Encoding.UTF8,
