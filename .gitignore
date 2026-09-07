@@ -21,3 +21,10 @@ node_modules
 junit.xml
 coverage/
 frontend/bundle-size.json
+
+# Eternal (blackletter display font) needs an FG Studios license for this kind of
+# use per its recorded terms — not free to redistribute here. Metal Mania (OFL)
+# and Trueno Round Bold (OFL) are both genuinely open and stay committed.
+# See fonts/README.md in each folder for how to drop your own copy in locally.
+frontend/public/fonts/Eternal.ttf
+website/fonts/Eternal.ttf

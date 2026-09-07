@@ -1,9 +1,21 @@
 /* LiftBoi project site.
-   Dark on purpose: the app is pure black with a green accent, and a light site in
+   Dark on purpose: the app is pure black with a violet accent, and a light site in
    front of it would be a different product. Everything here is hand-written — no
    framework, no build step, one stylesheet for all three pages. */
 
+/* Self-hosted, same three files the app bundles — no font CDN call from either.
+   MetalMania is short-string only (page h1s and the nav wordmark are a few words at
+   most); TruenoRound carries h2/h3 since those run longer; Eternal is missing digit
+   glyphs entirely, so it's confined to .eyebrow, the one label class with none. */
+@font-face{font-family:'MetalMania';src:url('fonts/Metal-Mania-Regular.ttf') format('truetype');font-display:swap}
+@font-face{font-family:'TruenoRound';src:url('fonts/Trueno-Round-Bold.otf') format('opentype');font-weight:700;font-display:swap}
+@font-face{font-family:'Eternal';src:url('fonts/Eternal.ttf') format('truetype');font-display:swap}
+
 :root {
+  --font-wordmark: 'MetalMania', ui-serif, Georgia, serif;
+  --font-display: 'TruenoRound', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --font-flourish: 'Eternal', ui-serif, Georgia, serif;
+
   --bg: #000;
   --surface: #0e0f11;
   --surface-2: #17181b;
@@ -68,14 +80,15 @@ button { font: inherit; color: inherit; background: none; border: 0; }
 
 /* ---------------------------------------------------------------- type scale */
 
-h1, h2, h3 { font-weight: 600; letter-spacing: -.03em; line-height: 1.07; }
-h1 { font-size: clamp(42px, 8.4vw, 82px); letter-spacing: -.04em; line-height: 1.02; }
+h1, h2, h3 { font-weight: 600; letter-spacing: -.03em; line-height: 1.07; font-family: var(--font-display); }
+h1 { font-size: clamp(42px, 8.4vw, 82px); letter-spacing: -.01em; line-height: 1.05; font-family: var(--font-wordmark); font-weight: 400; text-shadow: 0 0 26px color-mix(in srgb, var(--acc) 45%, transparent); }
 h2 { font-size: clamp(30px, 5.4vw, 50px); }
 h3 { font-size: clamp(19px, 2.3vw, 21px); letter-spacing: -.02em; line-height: 1.25; }
 
 .eyebrow {
   color: var(--acc);
-  font-size: 14px; font-weight: 600; letter-spacing: .01em;
+  font-family: var(--font-flourish);
+  font-size: 18px; font-weight: 400; letter-spacing: .02em;
   margin-bottom: 12px;
 }
 .lead {
@@ -98,7 +111,7 @@ h3 { font-size: clamp(19px, 2.3vw, 21px); letter-spacing: -.02em; line-height: 1
   transition: transform .25s var(--ease), background-color .25s var(--ease),
               border-color .25s var(--ease);
 }
-.btn:hover { text-decoration: none; background: #4ade63; }
+.btn:hover { text-decoration: none; background: #9670ff; }
 .btn:active { transform: scale(.975); }
 .btn.ghost { background: transparent; color: var(--fg); border-color: var(--hair); }
 .btn.ghost:hover { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .22); }
@@ -143,7 +156,7 @@ nav {
 .brand {
   display: flex; align-items: center; gap: 9px;
   align-self: stretch;                 /* the whole bar height is the tap target */
-  font-size: 17px; font-weight: 600; letter-spacing: -.02em; color: var(--fg);
+  font-family: var(--font-wordmark); font-size: 20px; font-weight: 400; letter-spacing: 0; color: var(--fg);
   margin-right: auto;
 }
 .brand:hover { text-decoration: none; }
@@ -165,7 +178,7 @@ nav {
   color: var(--acc-ink); background: var(--acc); font-weight: 600; font-size: 14px;
   padding: 7px 15px; border-radius: 999px;
 }
-.nav-quick .cta:hover { background: #4ade63; text-decoration: none; }
+.nav-quick .cta:hover { background: #9670ff; text-decoration: none; }
 .nav-quick .ql[aria-current="page"] { color: var(--fg); }
 
 /* The one link up here that asks for something instead of offering it — but it

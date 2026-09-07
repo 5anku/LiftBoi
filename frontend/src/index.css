@@ -108,6 +108,19 @@
 :root[data-theme="light"][data-accent="red"],
 :root[data-theme="light"][data-accent="shadow"] { --on-acc:#fff }
 
+/* -------------------------------------------------------------- fonts -- */
+/* Self-hosted, not a CDN call — matches the no-third-party-network stance everywhere
+   else in the app. MetalMania is the wordmark only (its jagged display cuts are
+   unreadable at UI sizes); TruenoRound is the "big moment" display face for large
+   numbers and headlines — the dense day-to-day UI (list rows, chips, tags) stays on
+   the system font, which is still the more legible choice under 20px. */
+@font-face{font-family:'MetalMania';src:url('/fonts/Metal-Mania-Regular.ttf') format('truetype');font-display:swap}
+@font-face{font-family:'TruenoRound';src:url('/fonts/Trueno-Round-Bold.otf') format('opentype');font-weight:700;font-display:swap}
+:root{
+  --font-wordmark:'MetalMania',ui-serif,Georgia,serif;
+  --font-display:'TruenoRound',-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;
+}
+
 /* ---------------------------------------------------------------- reset -- */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{
@@ -142,8 +155,8 @@ button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp butto
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 
 /* ------------------------------------------------------------ type scale -- */
-.t-large  {font-size:34px;line-height:1.06;font-weight:700;letter-spacing:-.028em}
-.t-title  {font-size:28px;line-height:1.12;font-weight:700;letter-spacing:-.024em}
+.t-large  {font-size:34px;line-height:1.06;font-weight:700;letter-spacing:-.028em;font-family:var(--font-display)}
+.t-title  {font-size:28px;line-height:1.12;font-weight:700;letter-spacing:-.024em;font-family:var(--font-display)}
 .t-title2 {font-size:22px;line-height:1.18;font-weight:700;letter-spacing:-.021em}
 .t-head   {font-size:17px;line-height:1.29;font-weight:600;letter-spacing:-.012em}
 .t-body   {font-size:17px;line-height:1.29;font-weight:400;letter-spacing:-.012em}
@@ -163,6 +176,14 @@ button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp butto
    and would otherwise win on source order. */
 .nocap,.tag.nocap,.chip.nocap{text-transform:none}
 
+/* The app's own name, wherever it appears as a title rather than running text —
+   the one place the jagged display face earns its keep. The glow is the accent
+   color itself so switching accents re-tints the wordmark for free. */
+.wordmark{
+  font-family:var(--font-wordmark);font-weight:400;letter-spacing:0;
+  text-shadow:0 0 18px color-mix(in srgb,var(--acc) 55%,transparent);
+}
+
 /* ---------------------------------------------------------------- layout -- */
 #app{
   padding:calc(var(--sat) + 8px) var(--pad) calc(128px + var(--sab));
@@ -176,7 +197,7 @@ body.resting #app{padding-bottom:calc(250px + var(--sab))}
 
 /* large title, the way a nav bar does it */
 .hdr{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:8px 0 18px}
-.hdr h1{font-size:34px;line-height:1.06;font-weight:700;letter-spacing:-.028em}
+.hdr h1{font-size:34px;line-height:1.06;font-weight:700;letter-spacing:-.028em;font-family:var(--font-display);text-shadow:0 0 22px color-mix(in srgb,var(--acc) 35%,transparent)}
 .hdr .sub{color:var(--label-2);font-size:15px;letter-spacing:-.006em;margin-top:4px}
 
 .iconbtn{
@@ -214,7 +235,7 @@ h4.sec{
   background:var(--surface);border-radius:var(--r-card);
   padding:16px;margin-bottom:12px;
 }
-.card .big{font-size:30px;font-weight:600;letter-spacing:-.026em;line-height:1.1}
+.card .big{font-size:30px;font-weight:600;letter-spacing:-.026em;line-height:1.1;font-family:var(--font-display)}
 
 /* ------------------------------------------------------ inset group list -- */
 .sect{margin-bottom:22px}
@@ -799,7 +820,7 @@ h4.sec{
   animation:slideup var(--med) var(--ease);
 }
 @keyframes slideup{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
-#timer .t{font-size:26px;font-weight:600;letter-spacing:-.026em;font-variant-numeric:tabular-nums;min-width:66px}
+#timer .t{font-size:26px;font-weight:600;letter-spacing:-.026em;font-variant-numeric:tabular-nums;min-width:66px;font-family:var(--font-display)}
 #timer .bar{flex:1;height:4px;background:var(--surface-3);border-radius:99px;overflow:hidden}
 #timer .bar i{display:block;height:100%;background:var(--acc);transition:width 1s linear}
 /* rest variant: −15/+15/Skip and the clock won't share one line on a phone, so the clock and
@@ -844,7 +865,7 @@ h4.sec{
 :root[data-theme="light"] .sheet{background:var(--bg)}
 @keyframes sheetup{from{transform:translateY(100%)}to{transform:none}}
 .sheet .grab{width:36px;height:5px;border-radius:99px;background:var(--label-4);margin:6px auto 14px}
-.sheet h3{font-size:20px;font-weight:600;letter-spacing:-.021em;margin-bottom:14px}
+.sheet h3{font-size:20px;font-weight:600;letter-spacing:-.021em;margin-bottom:14px;font-family:var(--font-display)}
 .picker-search{
   position:sticky;top:0;z-index:2;margin-bottom:0;padding-bottom:10px;
   background:var(--bg-el);
@@ -905,7 +926,7 @@ h4.sec{
 .bw-pm:active{background:var(--surface-2);transform:scale(.92)}
 .bw-read{
   font-size:52px;font-weight:600;letter-spacing:-.035em;min-width:158px;text-align:center;
-  font-variant-numeric:tabular-nums;line-height:1;
+  font-variant-numeric:tabular-nums;line-height:1;font-family:var(--font-display);
 }
 .bw-read .u{font-size:19px;color:var(--label-2);font-weight:400;letter-spacing:-.01em}
 .bwin{display:flex;align-items:baseline;justify-content:center;gap:7px;margin:16px 0}
@@ -994,7 +1015,7 @@ h4.sec{
 .mrow .v{font-size:12px;color:var(--label-2);min-width:52px;text-align:right;flex:none}
 /* A headline number inside a card — tile weight without a tile around it, for the pair of
    readings at the top of the effort card. */
-.stat-v{font-size:26px;font-weight:600;letter-spacing:-.026em;line-height:1.1}
+.stat-v{font-size:26px;font-weight:600;letter-spacing:-.026em;line-height:1.1;font-family:var(--font-display)}
 .mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .mchip{font-size:12px;padding:4px 9px;border-radius:99px;background:var(--surface-2);color:var(--label-2)}
 .mchip.miss{background:color-mix(in srgb,var(--orange) 16%,transparent);color:var(--orange)}
@@ -1007,7 +1028,7 @@ h4.sec{
   text-transform:none;display:flex;align-items:center;gap:5px;
 }
 .tile .l .icn{font-size:14px;color:var(--label)}
-.tile .v{font-size:26px;font-weight:600;letter-spacing:-.026em;margin-top:5px;line-height:1.1}
+.tile .v{font-size:26px;font-weight:600;letter-spacing:-.026em;margin-top:5px;line-height:1.1;font-family:var(--font-display)}
 .tile.tappable:active{background:var(--surface-2)}
 
 /* --- PR badge --- */

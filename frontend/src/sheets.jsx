@@ -1918,7 +1918,7 @@ export const sessionNoteSheet = () => ui().openSheet(close => <SessionNote close
 function WorkoutComplete({ close }) {
   return <div style={{ textAlign: 'center', padding: '8px 0' }}>
     <div style={{ fontSize: 44, display: 'flex', justifyContent: 'center', color: 'var(--acc)' }}><Icon name="checkCircle" /></div>
-    <h3 style={{ margin: '8px 0' }}>{t("That's the whole workout!")}</h3>
+    <h3 className="wordmark" style={{ margin: '8px 0', fontSize: 26 }}>{t("That's the whole workout!")}</h3>
     <div className="muted small" style={{ marginBottom: 16 }}>{t('Every exercise done — great work. Finish up, or keep going and add another exercise.')}</div>
     <Button variant="primary" icon="flag" onClick={() => { close(); finishWorkout() }}>{t('Finish workout')}</Button>
     <div style={{ height: 8 }} />
@@ -1931,7 +1931,7 @@ function FinishSummary({ w, prs, e1prs = [], insight, close }) {
   const st = useStore(s => s.S)
   return <div style={{ textAlign: 'center', padding: '8px 0' }}>
     <div style={{ fontSize: 44, display: 'flex', justifyContent: 'center', color: 'var(--acc)' }}><Icon name="trophy" /></div>
-    <h3 style={{ margin: '8px 0' }}>{t('Workout complete!')}</h3>
+    <h3 className="wordmark" style={{ margin: '8px 0', fontSize: 26 }}>{t('Workout complete!')}</h3>
     {insight && <div className="small dim" style={{ marginBottom: 12 }}>{insight}</div>}
     <div className="tiles" style={{ textAlign: 'left' }}>
       <div className="tile"><div className="l">{t('Duration')}</div><div className="v" style={{ fontSize: '1.1rem' }}>{fmtDur(w.end - w.start)}</div></div>

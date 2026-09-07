@@ -41,7 +41,7 @@ export default function MobileOnboarding() {
   const { chooseLocalMode } = useStore()
   const head = <>
     <div style={{ fontSize: 54, display: 'flex', justifyContent: 'center', color: 'var(--acc)' }}><Icon name="dumbbell" /></div>
-    <h1 style={{ fontSize: 34, fontWeight: 700, letterSpacing: '-.028em', margin: '10px 0 4px' }}>LiftBoi</h1>
+    <h1 className="wordmark" style={{ fontSize: 34, margin: '10px 0 4px' }}>LiftBoi</h1>
   </>
   const wrap = { display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '78vh', textAlign: 'center' }
   return (
