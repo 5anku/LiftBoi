@@ -253,10 +253,12 @@ h4.sec{
    and is the one kind of shadow that actually follows a notched silhouette. */
 .card{
   --notch:12px;
-  background:var(--surface);
+  background:
+    linear-gradient(160deg,color-mix(in srgb,var(--sys-glow) 20%,transparent),transparent 65%),
+    color-mix(in srgb,var(--sys-glow) 13%,var(--surface));
   padding:16px;margin-bottom:12px;
   clip-path:polygon(0 0,calc(100% - var(--notch)) 0,100% var(--notch),100% 100%,var(--notch) 100%,0 calc(100% - var(--notch)));
-  border:var(--hair) solid color-mix(in srgb,var(--sys-glow) 32%,var(--sep));
+  border:var(--hair) solid color-mix(in srgb,var(--sys-glow) 38%,var(--sep));
   filter:drop-shadow(0 0 7px color-mix(in srgb,var(--sys-glow) 20%,transparent));
 }
 .card .big{font-size:30px;font-weight:600;letter-spacing:-.026em;line-height:1.1;font-family:var(--font-display);text-shadow:var(--glow-info)}
