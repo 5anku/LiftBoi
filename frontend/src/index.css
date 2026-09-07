@@ -231,9 +231,17 @@ h4.sec{
 .row.between{justify-content:space-between}
 
 /* ----------------------------------------------------------------- card -- */
+/* Cut top-right and bottom-left corners rather than rounding them — the "System
+   window" panel look. clip-path also crops a normal box-shadow, so the glow rides
+   on filter:drop-shadow instead, which is computed from the shape *after* clipping
+   and is the one kind of shadow that actually follows a notched silhouette. */
 .card{
-  background:var(--surface);border-radius:var(--r-card);
+  --notch:12px;
+  background:var(--surface);
   padding:16px;margin-bottom:12px;
+  clip-path:polygon(0 0,calc(100% - var(--notch)) 0,100% var(--notch),100% 100%,var(--notch) 100%,0 calc(100% - var(--notch)));
+  border:var(--hair) solid color-mix(in srgb,var(--acc) 32%,var(--sep));
+  filter:drop-shadow(0 0 7px color-mix(in srgb,var(--acc) 20%,transparent));
 }
 .card .big{font-size:30px;font-weight:600;letter-spacing:-.026em;line-height:1.1;font-family:var(--font-display)}
 
@@ -850,8 +858,11 @@ h4.sec{
   touch-action:none;overscroll-behavior:none;
 }
 .sheet{
+  --notch:20px;
   position:absolute;left:0;right:0;bottom:0;background:var(--bg-el);
-  border-radius:var(--r-xl) var(--r-xl) 0 0;
+  clip-path:polygon(0 var(--notch),var(--notch) 0,calc(100% - var(--notch)) 0,100% var(--notch),100% 100%,0 100%);
+  border-top:1px solid color-mix(in srgb,var(--acc) 45%,transparent);
+  box-shadow:0 -8px 30px -6px color-mix(in srgb,var(--acc) 22%,transparent);
   padding:8px 18px calc(20px + var(--sab));
   max-height:90vh;max-height:min(90vh,calc(100dvh - 8px));
   overflow-y:auto;-webkit-overflow-scrolling:touch;scroll-padding-bottom:calc(20px + var(--sab));
@@ -872,11 +883,23 @@ h4.sec{
 }
 :root[data-theme="light"] .picker-search{background:var(--bg)}
 .center{
+  --notch:16px;
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:min(84vw,300px);background:var(--bg-el);border-radius:var(--r-lg);padding:20px;
-  box-shadow:0 20px 60px -12px rgba(0,0,0,.5);
+  width:min(84vw,300px);background:var(--bg-el);padding:24px 20px;
+  clip-path:polygon(var(--notch) 0,calc(100% - var(--notch)) 0,100% var(--notch),100% calc(100% - var(--notch)),calc(100% - var(--notch)) 100%,var(--notch) 100%,0 calc(100% - var(--notch)),0 var(--notch));
+  border:1px solid color-mix(in srgb,var(--acc) 55%,transparent);
+  filter:drop-shadow(0 0 24px color-mix(in srgb,var(--acc) 38%,transparent)) drop-shadow(0 20px 40px rgba(0,0,0,.5));
   animation:pop .28s var(--ease);
 }
+/* Corner brackets — the little frame accents every System window in the reference
+   art carries. Two 1px lines per corner, offset in from the notch so they read as
+   a separate ornament rather than a doubled border. */
+.center::before,.center::after{
+  content:'';position:absolute;width:10px;height:10px;pointer-events:none;
+  border-color:var(--acc);border-style:solid;opacity:.85;
+}
+.center::before{top:6px;left:6px;border-width:1.5px 0 0 1.5px}
+.center::after{bottom:6px;right:6px;border-width:0 1.5px 1.5px 0}
 :root[data-theme="light"] .center{background:#fff}
 @keyframes pop{from{transform:translate(-50%,-50%) scale(.94);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
 
