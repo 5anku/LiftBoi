@@ -897,21 +897,33 @@ h4.sec{
 .center{
   --notch:16px;
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:min(84vw,300px);background:var(--bg-el);padding:24px 20px;
+  width:min(84vw,300px);padding:24px 20px;
+  background:
+    radial-gradient(120% 90% at 15% -10%,color-mix(in srgb,var(--sys-glow) 10%,transparent),transparent 60%),
+    radial-gradient(100% 80% at 100% 110%,color-mix(in srgb,var(--sys-glow) 7%,transparent),transparent 55%),
+    var(--bg-el);
   clip-path:polygon(var(--notch) 0,calc(100% - var(--notch)) 0,100% var(--notch),100% calc(100% - var(--notch)),calc(100% - var(--notch)) 100%,var(--notch) 100%,0 calc(100% - var(--notch)),0 var(--notch));
   border:1px solid color-mix(in srgb,var(--sys-glow) 55%,transparent);
   filter:drop-shadow(0 0 24px color-mix(in srgb,var(--sys-glow) 38%,transparent)) drop-shadow(0 20px 40px rgba(0,0,0,.5));
   animation:pop .28s var(--ease);
 }
 /* Corner brackets — the little frame accents every System window in the reference
-   art carries. Two 1px lines per corner, offset in from the notch so they read as
-   a separate ornament rather than a doubled border. */
+   art carries, sitting proud of the panel edge rather than flush with it. */
 .center::before,.center::after{
-  content:'';position:absolute;width:10px;height:10px;pointer-events:none;
-  border-color:var(--sys-glow);border-style:solid;opacity:.85;
+  content:'';position:absolute;width:16px;height:16px;pointer-events:none;
+  border-color:var(--sys-glow);border-style:solid;opacity:.9;
+  filter:drop-shadow(0 0 4px color-mix(in srgb,var(--sys-glow) 70%,transparent));
 }
-.center::before{top:6px;left:6px;border-width:1.5px 0 0 1.5px}
-.center::after{bottom:6px;right:6px;border-width:0 1.5px 1.5px 0}
+.center::before{top:-5px;left:-5px;border-width:2px 0 0 2px}
+.center::after{bottom:-5px;right:-5px;border-width:0 2px 2px 0}
+/* The boxed all-caps label every System window titles itself with ("STATUS",
+   "NOTIFICATION") — a border hugging the text via inline-block, not a fixed box,
+   so it still fits "Workout complete!" and "That's the whole workout!" alike. */
+.center h3.wordmark{
+  display:inline-block;padding:5px 20px;margin:6px auto 16px;
+  border:1px solid color-mix(in srgb,var(--sys-glow) 45%,transparent);
+  text-shadow:0 0 14px color-mix(in srgb,var(--sys-glow) 60%,transparent);
+}
 :root[data-theme="light"] .center{background:#fff}
 @keyframes pop{from{transform:translate(-50%,-50%) scale(.94);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
 
@@ -1056,13 +1068,19 @@ h4.sec{
 .mchip.miss{background:color-mix(in srgb,var(--orange) 16%,transparent);color:var(--orange)}
 
 /* --- stat tiles --- */
+/* The STR/AGI/HP/MP stat-cell look: a plain bordered box, not notched — the
+   reference only cuts corners on the big outer frame, every cell inside it is a
+   straight rectangle. */
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.tile{background:var(--surface);border-radius:var(--r-card);padding:14px}
+.tile{
+  background:var(--surface);border-radius:var(--r-s);padding:14px;
+  border:var(--hair) solid color-mix(in srgb,var(--sys-glow) 28%,var(--sep));
+}
 .tile .l{
   color:var(--label-2);font-size:13px;font-weight:400;letter-spacing:-.004em;
   text-transform:none;display:flex;align-items:center;gap:5px;
 }
-.tile .l .icn{font-size:14px;color:var(--label)}
+.tile .l .icn{font-size:14px;color:var(--sys-glow)}
 .tile .v{font-size:26px;font-weight:600;letter-spacing:-.026em;margin-top:5px;line-height:1.1;font-family:var(--font-display)}
 .tile.tappable:active{background:var(--surface-2)}
 
