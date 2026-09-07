@@ -48,6 +48,11 @@
      so switching accents re-tints buttons and the wordmark without re-tinting the
      window frames themselves — exactly how the two colors behave on screen. */
   --sys-glow:#39c6ff;
+  /* Bright information reads white with a colored halo, never as colored text —
+     "dark background → accent glow → bright information" is the whole hierarchy.
+     Two-layer shadow: a tight white core (the text looks lit from within) plus a
+     wider --sys-glow halo (the light it's casting on the glass around it). */
+  --glow-info:0 0 6px rgba(255,255,255,.75),0 0 20px color-mix(in srgb,var(--sys-glow) 55%,transparent);
 
   /* accent (per-account, synced) */
   --acc:  var(--green);
@@ -175,11 +180,10 @@ button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp butto
 .muted{color:var(--label-2)} .dim{color:var(--label-3)}
 .small{font-size:13px;line-height:1.38}
 .accent{color:var(--acc)}
-/* The "[job changed] → [shadow monarch]" glowing-green upgrade callout from the
-   reference System UI — a record is exactly that kind of moment. Fixed green
-   regardless of accent, same reasoning as --sys-glow: it's a status color, not a
-   brand one. */
-.achieve{color:var(--green);text-shadow:0 0 10px color-mix(in srgb,var(--green) 55%,transparent)}
+/* The "[job changed] → [shadow monarch]" upgrade callout from the reference
+   System UI — a record is exactly the "bright information" tier, not a colored
+   status. White text, --sys-glow halo, same as every other System-rendered value. */
+.achieve{color:var(--label);text-shadow:var(--glow-info)}
 .capitalize{text-transform:capitalize}
 /* exercise names and body-part/equipment terms arrive lowercase from the dataset,
    so tags and chips capitalise by default. Anything that is a unit or a sentence opts
@@ -255,7 +259,7 @@ h4.sec{
   border:var(--hair) solid color-mix(in srgb,var(--sys-glow) 32%,var(--sep));
   filter:drop-shadow(0 0 7px color-mix(in srgb,var(--sys-glow) 20%,transparent));
 }
-.card .big{font-size:30px;font-weight:600;letter-spacing:-.026em;line-height:1.1;font-family:var(--font-display)}
+.card .big{font-size:30px;font-weight:600;letter-spacing:-.026em;line-height:1.1;font-family:var(--font-display);text-shadow:var(--glow-info)}
 
 /* ------------------------------------------------------ inset group list -- */
 .sect{margin-bottom:22px}
@@ -840,7 +844,7 @@ h4.sec{
   animation:slideup var(--med) var(--ease);
 }
 @keyframes slideup{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
-#timer .t{font-size:26px;font-weight:600;letter-spacing:-.026em;font-variant-numeric:tabular-nums;min-width:66px;font-family:var(--font-display)}
+#timer .t{font-size:26px;font-weight:600;letter-spacing:-.026em;font-variant-numeric:tabular-nums;min-width:66px;font-family:var(--font-display);text-shadow:var(--glow-info)}
 #timer .bar{flex:1;height:4px;background:var(--surface-3);border-radius:99px;overflow:hidden}
 #timer .bar i{display:block;height:100%;background:var(--acc);transition:width 1s linear}
 /* rest variant: −15/+15/Skip and the clock won't share one line on a phone, so the clock and
@@ -974,6 +978,7 @@ h4.sec{
 .bw-read{
   font-size:52px;font-weight:600;letter-spacing:-.035em;min-width:158px;text-align:center;
   font-variant-numeric:tabular-nums;line-height:1;font-family:var(--font-display);
+  text-shadow:var(--glow-info);
 }
 .bw-read .u{font-size:19px;color:var(--label-2);font-weight:400;letter-spacing:-.01em}
 .bwin{display:flex;align-items:baseline;justify-content:center;gap:7px;margin:16px 0}
@@ -1062,7 +1067,7 @@ h4.sec{
 .mrow .v{font-size:12px;color:var(--label-2);min-width:52px;text-align:right;flex:none}
 /* A headline number inside a card — tile weight without a tile around it, for the pair of
    readings at the top of the effort card. */
-.stat-v{font-size:26px;font-weight:600;letter-spacing:-.026em;line-height:1.1;font-family:var(--font-display)}
+.stat-v{font-size:26px;font-weight:600;letter-spacing:-.026em;line-height:1.1;font-family:var(--font-display);text-shadow:var(--glow-info)}
 .mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .mchip{font-size:12px;padding:4px 9px;border-radius:99px;background:var(--surface-2);color:var(--label-2)}
 .mchip.miss{background:color-mix(in srgb,var(--orange) 16%,transparent);color:var(--orange)}
@@ -1081,7 +1086,7 @@ h4.sec{
   text-transform:none;display:flex;align-items:center;gap:5px;
 }
 .tile .l .icn{font-size:14px;color:var(--sys-glow)}
-.tile .v{font-size:26px;font-weight:600;letter-spacing:-.026em;margin-top:5px;line-height:1.1;font-family:var(--font-display)}
+.tile .v{font-size:26px;font-weight:600;letter-spacing:-.026em;margin-top:5px;line-height:1.1;font-family:var(--font-display);text-shadow:var(--glow-info)}
 .tile.tappable:active{background:var(--surface-2)}
 
 /* --- PR badge --- */
