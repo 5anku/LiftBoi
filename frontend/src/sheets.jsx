@@ -11,6 +11,7 @@ import { beep, vibrate } from './lib/sound.js'
 import { t, dateLocale, instrFor, exerciseNameFor, getLang, INSTR_LANGS } from './lib/i18n.js'
 import { nav } from './lib/nav.js'
 import { buildStarterPlan, starterPlanDays, starterPlanOptions } from './lib/starter.js'
+import { generateWorkout, GENERATOR_FOCUS_OPTIONS, GENERATOR_STYLE_OPTIONS } from './lib/workout-generator.js'
 import Media, { Thumb } from './components/Media.jsx'
 import LineChart from './components/LineChart.jsx'
 import Stepper from './components/Stepper.jsx'
@@ -1687,6 +1688,52 @@ export function beginWorkout(routineId, bw) {
   useUI.getState().stopRest()
   nav('/workout')
 }
+
+/* ============================ generated (one-off) workout ============================ */
+// Freestyle's sibling: a session built from a focus + philosophy, never written to
+// S.routines. `routineId: null` is deliberate — it makes the session behave exactly like
+// Freestyle for progression purposes (see Workout.jsx's own `const freestyle = !A.routineId`),
+// which is correct here too: a generated session states its own weights and has no saved
+// identity to progress next time, because there won't be a next time with this exact plan.
+export function beginGeneratedWorkout(genRoutine, bw) {
+  const st = S()
+  const { entries } = buildSessionEntries(st, genRoutine)
+  update(s => {
+    s.active = { id: uid(), d: todayISO(), start: Date.now(), routineId: null, name: genRoutine.name, bw: bw || null, cur: 0, entries }
+  })
+  useUI.getState().stopRest()
+  nav('/workout')
+}
+
+function GeneratorChooser({ close }) {
+  const [focus, setFocus] = useState(null)
+  const [style, setStyle] = useState(null)
+
+  if (!focus) return <>
+    <h3>{t('What do you want to hit today?')}</h3>
+    <div className="list">
+      {GENERATOR_FOCUS_OPTIONS.map(o => <div key={o.value} className="item" {...tappable(() => setFocus(o.value))}>
+        <div className="grow"><div className="tt">{t(o.label)}</div></div>
+        <Icon name="chevronRight" className="chev" />
+      </div>)}
+    </div>
+  </>
+
+  return <>
+    <h3>{t('How do you want to train it?')}</h3>
+    <div className="list">
+      {GENERATOR_STYLE_OPTIONS.map(o => <div key={o.value} className="item" {...tappable(() => {
+        close()
+        const genRoutine = generateWorkout(S(), { focus, style: o.value })
+        bwSheet({ required: true, onDone: bw => beginGeneratedWorkout(genRoutine, bw) })
+      })}>
+        <div className="grow"><div className="tt">{t(o.label)}</div><div className="ss">{t(o.sub)}</div></div>
+        <Icon name="chevronRight" className="chev" />
+      </div>)}
+    </div>
+  </>
+}
+export const generatorSheet = () => ui().openSheet(close => <GeneratorChooser close={close} />)
 
 /* ============================ log a past workout ============================ */
 // The same screen as a live session, pointed at another day. `backfill` on the active
