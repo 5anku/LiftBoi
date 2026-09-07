@@ -14,9 +14,9 @@
   --fg-2: #a1a1a6;
   --fg-3: #7d7d85;  /* >=4.5:1 on every panel — WCAG AA for small text */
 
-  --acc: #32d74b;
-  --acc-ink: #04150a;
-  --acc-soft: rgba(50, 215, 75, .13);
+  --acc: #7c4dff;
+  --acc-ink: #f5f3ff;
+  --acc-soft: rgba(124, 77, 255, .13);
 
   --r-s: 12px;
   --r-m: 20px;
@@ -61,7 +61,7 @@ img, svg, iframe { display: block; max-width: 100%; }
 img { height: auto; }
 button { font: inherit; color: inherit; background: none; border: 0; }
 
-::selection { background: rgba(50, 215, 75, .3); }
+::selection { background: rgba(124, 77, 255, .3); }
 :focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; border-radius: 6px; }
 
 .wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
@@ -385,7 +385,7 @@ body.menu-open::after, body.contents-open::after { opacity: 1; pointer-events: a
 }
 .hero-stage::before {
   content: ""; position: absolute; inset: -12% -46% 14%;
-  background: radial-gradient(closest-side, rgba(50, 215, 75, .2), transparent 72%);
+  background: radial-gradient(closest-side, rgba(124, 77, 255, .2), transparent 72%);
   filter: blur(10px); pointer-events: none;
 }
 .hero-stage .device {
@@ -541,7 +541,7 @@ section { padding: var(--sec) 0 0; }
   background: var(--surface); border: 1px solid var(--hair-soft);
   border-radius: var(--r-l); padding: clamp(24px, 3.2vw, 34px);
 }
-.card.hl { border-color: rgba(50, 215, 75, .32); background: linear-gradient(180deg, rgba(50, 215, 75, .05), transparent 55%), var(--surface); }
+.card.hl { border-color: rgba(124, 77, 255, .32); background: linear-gradient(180deg, rgba(124, 77, 255, .05), transparent 55%), var(--surface); }
 .card .ic { width: 38px; height: 38px; color: var(--acc); margin-bottom: 16px; }
 .card .ic svg { width: 100%; height: 100%; }
 .card h3 { font-size: clamp(21px, 2.6vw, 25px); }
@@ -736,7 +736,7 @@ footer {
 .prose .who { color: var(--fg-3); margin-top: 26px; }
 
 .note {
-  background: var(--acc-soft); border: 1px solid rgba(50, 215, 75, .2);
+  background: var(--acc-soft); border: 1px solid rgba(124, 77, 255, .2);
   border-radius: var(--r-s); padding: 15px 18px; margin: 20px 0;
 }
 .note p, .note { color: #cfe9d5; font-size: 15.5px; line-height: 1.55; }
@@ -922,7 +922,7 @@ table.cfg td:first-child { white-space: nowrap; width: 1%; padding-right: 26px; 
    their color-only look — they are recognisable as controls by placement. */
 .prose p a, .prose li a, .prose td a, .foot .c a, .note a {
   text-decoration: underline;
-  text-decoration-color: rgba(50, 215, 75, .45);
+  text-decoration-color: rgba(124, 77, 255, .45);
   text-underline-offset: 2.5px;
 }
 .prose p a:hover, .prose li a:hover, .prose td a:hover, .foot .c a:hover, .note a:hover {
