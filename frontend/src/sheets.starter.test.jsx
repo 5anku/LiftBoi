@@ -55,7 +55,8 @@ describe('starter plan chooser', () => {
       'Push / Pull / Legs', 'Upper / Lower', 'Full Body', '5×5',
       '5-Day Upper/Lower/Push/Pull/Legs', 'Minimalist HIT', 'Pure Strength', 'Pure Hypertrophy',
       'Classic Full-Body', 'Upper/Lower (Powerbuilding)', '6-Day PPL', 'Min-Max 4-Day',
-      'Cutting-Phase Maintenance', 'Strength Peak / Test Block', 'Minimal Equipment / Travel'
+      'Cutting-Phase Maintenance', 'Strength Peak / Test Block', 'Minimal Equipment / Travel',
+      'Chest/Back Focus Split'
     ])
     expect(rowFor(host, 'Upper / Lower').querySelector('.ss').textContent).toContain('4 days per week')
   })

@@ -12,7 +12,7 @@ import { t, exerciseNameFor } from '../lib/i18n.js'
 import { api } from '../lib/api.js'
 import { insertionIndexAfterCurrentUnit, nextUnfinishedUnit, setProgressHighWater, supersetFlowStep, restAfterSet, restOnRecheck, restSecFor } from '../lib/supersetFlow.js'
 import Media from '../components/Media.jsx'
-import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, finishWorkout, workoutCompleteSheet, confirmSheet, exerciseNoteSheet, sessionNoteSheet, swapActiveWorkoutExercise, barWeightSheet, menuSheet, effortPickerSheet, exerciseHistorySheet, generatorSheet } from '../sheets.jsx'
+import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, finishWorkout, workoutCompleteSheet, confirmSheet, exerciseNoteSheet, sessionNoteSheet, swapActiveWorkoutExercise, barWeightSheet, menuSheet, effortPickerSheet, exerciseHistorySheet, generatorSheet, programRecommenderSheet } from '../sheets.jsx'
 import { effortColor } from '../lib/effort.js'
 import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
@@ -52,6 +52,8 @@ function StartChooser() {
     <Button icon="shuffle" onClick={() => startFlow(null)}>{t('Freestyle workout (pick as you go)')}</Button>
     <div style={{ height: 8 }} />
     <Button icon="sparkles" onClick={generatorSheet}>{t('Generate a workout (Bench Day, Deadlift Day…)')}</Button>
+    <div style={{ height: 8 }} />
+    <Button icon="sparkles" onClick={programRecommenderSheet}>{t('Choose a program for me')}</Button>
     {!S.routines.length && <><div style={{ height: 10 }} /><Button variant="primary" onClick={() => nav('/plan')}>{t('Build a plan first')}</Button></>}
   </div>
 }

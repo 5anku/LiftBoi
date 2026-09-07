@@ -12,6 +12,7 @@ import { t, dateLocale, instrFor, exerciseNameFor, getLang, INSTR_LANGS } from '
 import { nav } from './lib/nav.js'
 import { buildStarterPlan, starterPlanDays, starterPlanOptions } from './lib/starter.js'
 import { generateWorkout, GENERATOR_FOCUS_OPTIONS, GENERATOR_STYLE_OPTIONS } from './lib/workout-generator.js'
+import { recommendPrograms, GOAL_OPTIONS, DAYS_OPTIONS, PHILOSOPHY_OPTIONS } from './lib/program-recommender.js'
 import Media, { Thumb } from './components/Media.jsx'
 import LineChart from './components/LineChart.jsx'
 import Stepper from './components/Stepper.jsx'
@@ -105,7 +106,8 @@ const PLAN_COPY = {
   minmax: () => ({ name: t('Min-Max 4-Day'), about: t('Low volume, high variety. The middle ground between HIT and a full split.') }),
   cutting: () => ({ name: t('Cutting-Phase Maintenance'), about: t('The 5-day split with accessories trimmed. Holds the line in a deficit instead of climbing.') }),
   peak: () => ({ name: t('Strength Peak / Test Block'), about: t('4-5 weeks ramping to a 1-rep test on squat, bench and deadlift.') }),
-  travel: () => ({ name: t('Minimal Equipment / Travel'), about: t('Full body, dumbbells or bodyweight only. Hotel-gym friendly.') })
+  travel: () => ({ name: t('Minimal Equipment / Travel'), about: t('Full body, dumbbells or bodyweight only. Hotel-gym friendly.') }),
+  'chest-back-focus': () => ({ name: t('Chest/Back Focus Split'), about: t('Chest emphasis one day, back emphasis the next, legs last. A menu of picks, fixed to one default per slot.') })
 }
 
 // Adds the plan's routines and puts them on its weekdays. Existing routines are never touched
@@ -126,23 +128,26 @@ export function loadStarterPlan(planId) {
 // Intl joins the days the way each language does it — "and" vs "und", "、" in Chinese.
 const dayList = days => new Intl.ListFormat(dateLocale()).format(days.map(d => t(DAYN[d])))
 
+// Shared by the plain chooser and the recommender's "load this" buttons: only interrupt with
+// a confirmation when a day the plan wants is actually occupied by a routine that still exists
+// — not a stale id the Plan already shows as "Rest".
+function chooseStarterPlan(id, name, week, routines, close) {
+  const days = starterPlanDays(id)
+  close()
+  const taken = day => week[day] && routines.some(r => r.id === week[day])
+  if (!days.some(taken)) { loadStarterPlan(id); return }
+  confirmSheet({
+    title: t('Load {0}?', name),
+    message: t('The new plan will be scheduled on {0}. Existing routines are kept — only those days of the weekly plan change.', dayList(days)),
+    confirmText: t('Load plan'),
+    onConfirm: () => loadStarterPlan(id)
+  })
+}
+
 function StarterPlanChooser({ close }) {
   const week = useStore(s => s.S.week)
   const routines = useStore(s => s.S.routines)
-  const choose = (id, name) => {
-    const days = starterPlanDays(id)
-    close()
-    // A confirmation is only worth showing when one of those days is actually occupied — by a
-    // routine that still exists, not by a stale id the Plan already shows as "Rest".
-    const taken = day => week[day] && routines.some(r => r.id === week[day])
-    if (!days.some(taken)) { loadStarterPlan(id); return }
-    confirmSheet({
-      title: t('Load {0}?', name),
-      message: t('The new plan will be scheduled on {0}. Existing routines are kept — only those days of the weekly plan change.', dayList(days)),
-      confirmText: t('Load plan'),
-      onConfirm: () => loadStarterPlan(id)
-    })
-  }
+  const choose = (id, name) => chooseStarterPlan(id, name, week, routines, close)
   return <>
     <h3>{t('Choose starter plan')}</h3>
     <div className="list">
@@ -159,6 +164,69 @@ function StarterPlanChooser({ close }) {
 }
 
 export const starterPlanSheet = () => ui().openSheet(close => <StarterPlanChooser close={close} />)
+
+/* ============================ program recommender ("choose a program for me") ============================ */
+// A three-question quiz scored against the 12 programs with a real "use when" written for
+// them (see program-recommender.js) — the plain chooser above still lists every plan by name
+// for anyone who already knows which one they want.
+function ProgramRecommender({ close }) {
+  const week = useStore(s => s.S.week)
+  const routines = useStore(s => s.S.routines)
+  const [days, setDays] = useState(null)
+  const [goal, setGoal] = useState(null)
+  const [philosophy, setPhilosophy] = useState(null)
+
+  if (days == null) return <>
+    <h3>{t('How many days a week do you have?')}</h3>
+    <div className="list">
+      {DAYS_OPTIONS.map(d => <div key={d} className="item" {...tappable(() => setDays(d))}>
+        <div className="grow"><div className="tt">{t('{0} days a week', d)}</div></div>
+        <Icon name="chevronRight" className="chev" />
+      </div>)}
+    </div>
+  </>
+
+  if (goal == null) return <>
+    <h3>{t('What are you training for?')}</h3>
+    <div className="list">
+      {GOAL_OPTIONS.map(o => <div key={o.value} className="item" {...tappable(() => setGoal(o.value))}>
+        <div className="grow"><div className="tt">{t(o.label)}</div></div>
+        <Icon name="chevronRight" className="chev" />
+      </div>)}
+    </div>
+  </>
+
+  if (philosophy == null) return <>
+    <h3>{t('How do you want to train?')}</h3>
+    <div className="list">
+      {PHILOSOPHY_OPTIONS.map(o => <div key={o.value} className="item" {...tappable(() => setPhilosophy(o.value))}>
+        <div className="grow"><div className="tt">{t(o.label)}</div><div className="ss">{t(o.sub)}</div></div>
+        <Icon name="chevronRight" className="chev" />
+      </div>)}
+    </div>
+  </>
+
+  const ranked = recommendPrograms({ days, goal, philosophy })
+  const [best, ...runnersUp] = ranked
+  const rest = runnersUp.filter((r, i, arr) => r.score > 0 && arr.findIndex(x => x.id === r.id) === i).slice(0, 2)
+  const row = (id, isBest) => {
+    const { name, about } = PLAN_COPY[id]()
+    return <div key={id} className="item" {...tappable(() => chooseStarterPlan(id, name, week, routines, close))}>
+      <span className="lrow-i" style={{ background: 'var(--surface-3)' }}><Icon name={isBest ? 'sparkles' : 'chevronRight'} /></span>
+      <div className="grow"><div className="tt">{name}</div><div className="ss">{about}</div></div>
+      <Icon name="chevronRight" className="chev" />
+    </div>
+  }
+  return <>
+    <h3>{t('Your best fit')}</h3>
+    <div className="list">{row(best.id, true)}</div>
+    {rest.length > 0 && <>
+      <h4 className="sec">{t('Also worth a look')}</h4>
+      <div className="list">{rest.map(r => row(r.id, false))}</div>
+    </>}
+  </>
+}
+export const programRecommenderSheet = () => ui().openSheet(close => <ProgramRecommender close={close} />)
 
 /* ============================ weight picker (shared: body weight + goal) ============================ */
 // Fixed range, not a moving window — a window that resizes itself mid-drag (the previous

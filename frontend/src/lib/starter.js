@@ -318,6 +318,39 @@ const TRAVEL = [
   ]]
 ]
 
+// Program 11 — Chest/Back Focus Split: the source doc writes every slot as "pick 1 of N"
+// (Nippard's exercise-substitution logic — same muscle, different angle), which the routine
+// model can't represent yet. Fixed to one sensible pick per slot until the program-recommender
+// / generator grow a real "choose one" mechanism; swapping any exercise for its slot-mates by
+// hand loses nothing structurally. RPE 8 on compounds, 9 on isolation/finishers (last set to
+// failure, per Mentzer) — the same rule as everywhere else in this file.
+const CHEST_BACK_FOCUS = [
+  ['cbf-chest', 'Upper (Chest Focus)', 'barbell', [
+    ['0025', 3, 8, { note: 'Horizontal push · RPE 8' }],
+    ['0227', 3, 12, { note: 'Cable Fly or Chest Fly · squeezing motion · RPE 9' }],
+    ['1350', 3, 10, { note: 'Chest-Supported Row or Lat Pulldown · RPE 8' }],
+    ['0405', 3, 8, { note: 'Shoulder Press · RPE 8' }],
+    ['0203', 2, 15, { note: 'Face Pull · rear delt · RPE 9' }],
+    ['0031', 3, 10, { note: 'Barbell Curl · RPE 9-10 (failure)' }],
+    ['0241', 3, 10, { note: 'Triceps Pushdown · RPE 9-10 (failure)' }]
+  ]],
+  ['cbf-back', 'Upper (Back Focus)', 'pullup', [
+    ['2330', 3, 8, { note: 'Vertical pull · Lat Pulldown · RPE 8' }],
+    ['0027', 3, 8, { note: 'Horizontal pull · Barbell Row · RPE 8' }],
+    ['0047', 3, 10, { note: 'Incline Bench or Chest Fly · RPE 8' }],
+    ['0334', 3, 12, { note: 'Lateral Raise · RPE 8-9' }],
+    ['0383', 2, 15, { note: 'Rear Delt Fly · RPE 9' }],
+    ['0313', 3, 10, { note: 'Hammer Curl · RPE 9-10 (failure)' }],
+    ['0060', 3, 10, { note: 'Skull Crusher · RPE 9-10 (failure)' }]
+  ]],
+  ['cbf-legs', 'Legs', 'legs', [
+    ['0043', 3, 8, { note: 'RPE 8' }],
+    ['0585', 3, 12, { note: 'Leg Extension · quad accessory · RPE 9' }],
+    ['0586', 3, 10, { note: 'Leg Curl · posterior chain · RPE 9' }],
+    ['0605', 3, 12, { note: 'Standing Calf Raise · RPE 9-10 (failure)' }]
+  ]]
+]
+
 // [weekday, routineKey] — weekday is a DAYN index, so 1 is Monday. Fixed weeks only: every
 // plan repeats the same seven days, which is all the weekly plan model can represent.
 const PLANS = {
@@ -336,7 +369,8 @@ const PLANS = {
   minmax: { routines: MINMAX, schedule: [[1, 'mm-upper'], [2, 'mm-lower'], [4, 'mm-upper'], [5, 'mm-lower']] },
   cutting: { routines: CUTTING, schedule: [[1, 'cut-upper'], [2, 'cut-lower'], [3, 'cut-push'], [4, 'cut-pull'], [5, 'cut-legs']] },
   peak: { routines: PEAK, schedule: [[1, 'peak-squat'], [3, 'peak-bench'], [5, 'peak-deadlift']] },
-  travel: { routines: TRAVEL, schedule: [[1, 'travel-fb'], [3, 'travel-fb'], [5, 'travel-fb']] }
+  travel: { routines: TRAVEL, schedule: [[1, 'travel-fb'], [3, 'travel-fb'], [5, 'travel-fb']] },
+  'chest-back-focus': { routines: CHEST_BACK_FOCUS, schedule: [[1, 'cbf-chest'], [3, 'cbf-back'], [5, 'cbf-legs']] }
 }
 
 const mkEx = ([id, sets, reps, opts]) => ({
