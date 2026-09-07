@@ -41,6 +41,13 @@
   --yellow:#ffd60a; --teal:#40c8e0; --indigo:#5e5ce6; --pink:#ff375f;
   --purple:#bf5af2; --mint:#63e6e2; --brown:#ac8e68; --grey:#8e8e93;
   --shadow:#7c4dff;
+  /* The System window's own color — fixed, not accent-dependent. In the source
+     material the "System" UI (Status, Inventory, Notifications) always glows this
+     ice-blue regardless of context; the Shadow Monarch's own violet aura (--acc,
+     the wordmark) is a separate, character-bound color. Panel chrome uses this one
+     so switching accents re-tints buttons and the wordmark without re-tinting the
+     window frames themselves — exactly how the two colors behave on screen. */
+  --sys-glow:#39c6ff;
 
   /* accent (per-account, synced) */
   --acc:  var(--green);
@@ -168,6 +175,11 @@ button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp butto
 .muted{color:var(--label-2)} .dim{color:var(--label-3)}
 .small{font-size:13px;line-height:1.38}
 .accent{color:var(--acc)}
+/* The "[job changed] → [shadow monarch]" glowing-green upgrade callout from the
+   reference System UI — a record is exactly that kind of moment. Fixed green
+   regardless of accent, same reasoning as --sys-glow: it's a status color, not a
+   brand one. */
+.achieve{color:var(--green);text-shadow:0 0 10px color-mix(in srgb,var(--green) 55%,transparent)}
 .capitalize{text-transform:capitalize}
 /* exercise names and body-part/equipment terms arrive lowercase from the dataset,
    so tags and chips capitalise by default. Anything that is a unit or a sentence opts
@@ -240,8 +252,8 @@ h4.sec{
   background:var(--surface);
   padding:16px;margin-bottom:12px;
   clip-path:polygon(0 0,calc(100% - var(--notch)) 0,100% var(--notch),100% 100%,var(--notch) 100%,0 calc(100% - var(--notch)));
-  border:var(--hair) solid color-mix(in srgb,var(--acc) 32%,var(--sep));
-  filter:drop-shadow(0 0 7px color-mix(in srgb,var(--acc) 20%,transparent));
+  border:var(--hair) solid color-mix(in srgb,var(--sys-glow) 32%,var(--sep));
+  filter:drop-shadow(0 0 7px color-mix(in srgb,var(--sys-glow) 20%,transparent));
 }
 .card .big{font-size:30px;font-weight:600;letter-spacing:-.026em;line-height:1.1;font-family:var(--font-display)}
 
@@ -861,8 +873,8 @@ h4.sec{
   --notch:20px;
   position:absolute;left:0;right:0;bottom:0;background:var(--bg-el);
   clip-path:polygon(0 var(--notch),var(--notch) 0,calc(100% - var(--notch)) 0,100% var(--notch),100% 100%,0 100%);
-  border-top:1px solid color-mix(in srgb,var(--acc) 45%,transparent);
-  box-shadow:0 -8px 30px -6px color-mix(in srgb,var(--acc) 22%,transparent);
+  border-top:1px solid color-mix(in srgb,var(--sys-glow) 45%,transparent);
+  box-shadow:0 -8px 30px -6px color-mix(in srgb,var(--sys-glow) 22%,transparent);
   padding:8px 18px calc(20px + var(--sab));
   max-height:90vh;max-height:min(90vh,calc(100dvh - 8px));
   overflow-y:auto;-webkit-overflow-scrolling:touch;scroll-padding-bottom:calc(20px + var(--sab));
@@ -887,8 +899,8 @@ h4.sec{
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   width:min(84vw,300px);background:var(--bg-el);padding:24px 20px;
   clip-path:polygon(var(--notch) 0,calc(100% - var(--notch)) 0,100% var(--notch),100% calc(100% - var(--notch)),calc(100% - var(--notch)) 100%,var(--notch) 100%,0 calc(100% - var(--notch)),0 var(--notch));
-  border:1px solid color-mix(in srgb,var(--acc) 55%,transparent);
-  filter:drop-shadow(0 0 24px color-mix(in srgb,var(--acc) 38%,transparent)) drop-shadow(0 20px 40px rgba(0,0,0,.5));
+  border:1px solid color-mix(in srgb,var(--sys-glow) 55%,transparent);
+  filter:drop-shadow(0 0 24px color-mix(in srgb,var(--sys-glow) 38%,transparent)) drop-shadow(0 20px 40px rgba(0,0,0,.5));
   animation:pop .28s var(--ease);
 }
 /* Corner brackets — the little frame accents every System window in the reference
@@ -896,7 +908,7 @@ h4.sec{
    a separate ornament rather than a doubled border. */
 .center::before,.center::after{
   content:'';position:absolute;width:10px;height:10px;pointer-events:none;
-  border-color:var(--acc);border-style:solid;opacity:.85;
+  border-color:var(--sys-glow);border-style:solid;opacity:.85;
 }
 .center::before{top:6px;left:6px;border-width:1.5px 0 0 1.5px}
 .center::after{bottom:6px;right:6px;border-width:0 1.5px 1.5px 0}
