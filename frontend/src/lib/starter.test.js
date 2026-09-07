@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { EXIDX } from './exercises.js'
 import { buildStarterPlan, starterPlanDays, starterPlanOptions, starterRoutines } from './starter.js'
 
+// The library plans added on top of the original four — RPE/volume-landmark programs sourced
+// from a specific written program, not generic templates. Their exercise picks and rep/RPE
+// notes are training content, not invariants worth pinning verbatim here (that would just be a
+// change-detector test); what's worth protecting is that every one is structurally sound.
+const EXTENDED_PLAN_IDS = [
+  'ulppl', 'hit', 'pure-strength', 'pure-hypertrophy', 'classic-full-body',
+  'powerbuild-ul', 'ppl-6day', 'minmax', 'cutting', 'peak', 'travel'
+]
+
 // The approved prescription, written out again rather than imported: a test that reads the
 // same table as the code would pass no matter what that table said. [weekday, name, sets].
 const APPROVED = {
@@ -31,11 +40,9 @@ const APPROVED = {
 const shape = r => r.ex.map(e => [e.id, e.sets, e.reps])
 
 describe('starter plan catalog', () => {
-  it('offers exactly the four plans, with the day count read off the schedule', () => {
-    expect(starterPlanOptions()).toEqual([
-      { id: 'ppl', days: 3 }, { id: 'upper-lower', days: 4 },
-      { id: 'full-body', days: 3 }, { id: '5x5', days: 3 },
-    ])
+  it('offers the original four plans plus the extended library, with the day count read off the schedule', () => {
+    const ids = starterPlanOptions().map(o => o.id)
+    expect(ids).toEqual(['ppl', 'upper-lower', 'full-body', '5x5', ...EXTENDED_PLAN_IDS])
     for (const { id, days } of starterPlanOptions()) expect(starterPlanDays(id)).toHaveLength(days)
   })
 
@@ -85,6 +92,54 @@ describe.each(Object.keys(APPROVED))('%s', planId => {
     // and the static definition survives a caller mutating what it got back
     first.routines[0].ex[0].sets = 99
     expect(buildStarterPlan(planId).routines[0].ex[0].sets).toBe(approved[0][2][0][1])
+  })
+})
+
+describe.each(EXTENDED_PLAN_IDS)('extended program library: %s', planId => {
+  it('resolves to a real, well-formed plan', () => {
+    const days = starterPlanDays(planId)
+    expect(days).not.toBeNull()
+    expect(days.length).toBeGreaterThan(0)
+    // every weekday is Mon(1)..Sun(7), so a typo'd schedule tuple can't silently pass
+    for (const d of days) expect(d).toBeGreaterThanOrEqual(1) && expect(d).toBeLessThanOrEqual(7)
+
+    const built = buildStarterPlan(planId)
+    expect(built.routines.length).toBeGreaterThan(0)
+    // schedule length can exceed routine count (a routine repeated across multiple weekdays,
+    // e.g. push/pull/legs run twice a week), but never reference a routine that wasn't built
+    const routineIds = new Set(built.routines.map(r => r.id))
+    for (const { routineId } of built.schedule) expect(routineIds.has(routineId)).toBe(true)
+  })
+
+  it('references only real exercises with positive sets/reps and non-negative seeded weight', () => {
+    for (const r of buildStarterPlan(planId).routines) {
+      expect(r.ex.length).toBeGreaterThan(0)
+      for (const e of r.ex) {
+        expect(EXIDX[e.id], `${planId}/${r.name}: unknown exercise id ${e.id}`).toBeTruthy()
+        expect(e.sets).toBeGreaterThan(0)
+        expect(e.reps).toBeGreaterThan(0)
+        expect(e.weight).toBeGreaterThanOrEqual(0)
+      }
+    }
+  })
+
+  it('mints fresh ids and independent objects on every build', () => {
+    const first = buildStarterPlan(planId)
+    const second = buildStarterPlan(planId)
+    const ids = first.routines.map(r => r.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(second.routines.some(r => ids.includes(r.id))).toBe(false)
+    expect(first.routines[0].ex[0]).not.toBe(second.routines[0].ex[0])
+  })
+})
+
+describe('pure-strength superset', () => {
+  it('links the Face Pull + Curl finisher via a shared sg', () => {
+    const { routines } = buildStarterPlan('pure-strength')
+    const accessory = routines.find(r => r.name === '4 — Repeat/Accessory')
+    const [facePull, curl] = accessory.ex.slice(-2)
+    expect(facePull.sg).toBeTruthy()
+    expect(facePull.sg).toBe(curl.sg)
   })
 })
 

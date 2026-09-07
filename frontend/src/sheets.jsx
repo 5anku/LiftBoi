@@ -29,6 +29,7 @@ import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLIC
 import { normalizeRepRange } from './lib/rep-range.js'
 import { MOBILE, shareExport } from './lib/mobile.js'
 import { buildCompletedWorkout } from './lib/finish-workout.js'
+import { spotPrinciple } from './lib/ideology-insight.js'
 import { isWarmupRow } from './lib/workout-model.js'
 import { nextUnfinishedUnit } from './lib/supersetFlow.js'
 import { swapActiveExercise } from './lib/active-exercise-swap.js'
@@ -91,7 +92,19 @@ const PLAN_COPY = {
   ppl: () => ({ name: t('Push / Pull / Legs'), about: t('Push, pull and legs each get their own day.') }),
   'upper-lower': () => ({ name: t('Upper / Lower'), about: t('Upper body twice, lower body twice.') }),
   'full-body': () => ({ name: t('Full Body'), about: t('Three sessions, the whole body each time.') }),
-  '5x5': () => ({ name: t('5×5'), about: t('Five sets of five on the main barbell lifts.') })
+  '5x5': () => ({ name: t('5×5'), about: t('Five sets of five on the main barbell lifts.') }),
+
+  ulppl: () => ({ name: t('5-Day Upper/Lower/Push/Pull/Legs'), about: t('Balanced default: strength and size together. 6-week block — weeks 2-5 add sets toward MRV, week 6 deloads.') }),
+  hit: () => ({ name: t('Minimalist HIT'), about: t('One work set to true failure per exercise. Under 30 minutes, 3x/week.') }),
+  'pure-strength': () => ({ name: t('Pure Strength'), about: t('Top set + back-off on squat, bench and deadlift. 4 progressive weeks, then deload and retest.') }),
+  'pure-hypertrophy': () => ({ name: t('Pure Hypertrophy'), about: t('Push/pull/legs twice a week. Volume climbs from MEV toward MRV across the block.') }),
+  'classic-full-body': () => ({ name: t('Classic Full-Body'), about: t('All sets to failure, 3x/week. Good for rebuilding after time off.') }),
+  'powerbuild-ul': () => ({ name: t('Upper/Lower (Powerbuilding)'), about: t('Strength-biased A days, hypertrophy-biased B days. More volume than strength-only.') }),
+  'ppl-6day': () => ({ name: t('6-Day PPL'), about: t('Each muscle twice a week at moderate volume instead of once heavy.') }),
+  minmax: () => ({ name: t('Min-Max 4-Day'), about: t('Low volume, high variety. The middle ground between HIT and a full split.') }),
+  cutting: () => ({ name: t('Cutting-Phase Maintenance'), about: t('The 5-day split with accessories trimmed. Holds the line in a deficit instead of climbing.') }),
+  peak: () => ({ name: t('Strength Peak / Test Block'), about: t('4-5 weeks ramping to a 1-rep test on squat, bench and deadlift.') }),
+  travel: () => ({ name: t('Minimal Equipment / Travel'), about: t('Full body, dumbbells or bodyweight only. Hotel-gym friendly.') })
 }
 
 // Adds the plan's routines and puts them on its weekdays. Existing routines are never touched
@@ -1914,11 +1927,12 @@ function WorkoutComplete({ close }) {
 }
 export const workoutCompleteSheet = () => ui().openSheet(close => <WorkoutComplete close={close} />, { kind: 'center' })
 
-function FinishSummary({ w, prs, e1prs = [], close }) {
+function FinishSummary({ w, prs, e1prs = [], insight, close }) {
   const st = useStore(s => s.S)
   return <div style={{ textAlign: 'center', padding: '8px 0' }}>
     <div style={{ fontSize: 44, display: 'flex', justifyContent: 'center', color: 'var(--acc)' }}><Icon name="trophy" /></div>
     <h3 style={{ margin: '8px 0' }}>{t('Workout complete!')}</h3>
+    {insight && <div className="small dim" style={{ marginBottom: 12 }}>{insight}</div>}
     <div className="tiles" style={{ textAlign: 'left' }}>
       <div className="tile"><div className="l">{t('Duration')}</div><div className="v" style={{ fontSize: '1.1rem' }}>{fmtDur(w.end - w.start)}</div></div>
       <div className="tile"><div className="l">{t('Volume')}</div><div className="v" style={{ fontSize: '1.1rem' }}>{fmtVol(w.vol, st.unit)}</div></div>
@@ -1967,6 +1981,7 @@ function doFinishWorkout() {
     snapshotFor: e => EXIDX[e.id]?.custom ? exerciseMuscleSnapshot(EXIDX[e.id]) : null,
   })
   w.vol = workoutVolume(w)
+  const insight = spotPrinciple(st, w)
   update(s => {
     if (past) {
       s.workouts = completeBackfill(s.workouts, A, w)
@@ -1982,5 +1997,5 @@ function doFinishWorkout() {
   useStore.getState().autoBackupNow()
   useUI.getState().stopRest()
   beep(snd(), 880, 0.15); beep(snd(), 1100, 0.15, 0.18); beep(snd(), 1320, 0.3, 0.36)
-  ui().openSheet(close => <FinishSummary w={w} prs={prs} e1prs={e1prs} close={close} />, { kind: 'center', locked: true })
+  ui().openSheet(close => <FinishSummary w={w} prs={prs} e1prs={e1prs} insight={insight} close={close} />, { kind: 'center', locked: true })
 }
