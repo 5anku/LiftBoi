@@ -1,9 +1,29 @@
 import { describe, it, expect } from 'vitest'
 import { EXIDX, EXDB, smOf } from './exercises.js'
 import {
-  MUSCLE_NAME, exerciseMuscleSnapshot, hasExplicitMuscleMetadata, levelsOf, loadOf,
+  MUSCLE_NAME, FINE_MUSCLES, FINE_MUSCLE_NAME, exerciseMuscleSnapshot, hasExplicitMuscleMetadata, levelsOf, loadOf,
   loadOfWorkouts, matchesMuscleGroups, muscleBalanceWindow, muscleGroupsOf, musclesOf, rankOf
 } from './muscles.js'
+
+describe('finer picker choices fold into their body-map slug', () => {
+  it('every FINE_MUSCLES entry has a display name and resolves to a real drawable muscle', () => {
+    for (const m of FINE_MUSCLES) {
+      expect(FINE_MUSCLE_NAME[m], m).toBeTruthy()
+      expect(muscleGroupsOf({ primaries: [m] }), m).toHaveLength(1)
+    }
+  })
+
+  it('a delt head picked as the only primary still shows up as the shoulder on the map', () => {
+    expect(muscleGroupsOf({ primaries: ['front delts'] })).toEqual(['deltoids'])
+    expect(muscleGroupsOf({ primaries: ['side delts'] })).toEqual(['deltoids'])
+    expect(muscleGroupsOf({ primaries: ['rear delts'] })).toEqual(['deltoids'])
+  })
+
+  it('upper and lower chest both fold into chest, and stay deduped against a coarse pick', () => {
+    expect(muscleGroupsOf({ primaries: ['upper chest', 'lower chest'] })).toEqual(['chest'])
+    expect(muscleGroupsOf({ primaries: ['chest', 'upper chest'] })).toEqual(['chest'])
+  })
+})
 
 describe('multi-muscle exercise metadata', () => {
   it('normalizes legacy primary/secondary fields and removes duplicate groups', () => {

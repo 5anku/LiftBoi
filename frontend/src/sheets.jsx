@@ -21,7 +21,7 @@ import { Button, Slider, Switch, Segmented, SelectRow, Row, TextField, NumberFie
 import { glyphOf, GLYPH_GROUPS, DEFAULT_GLYPH } from './lib/glyphs.js'
 import BodyMap from './components/BodyMap.jsx'
 import MuscleExplorer from './components/MuscleExplorer.jsx'
-import { exerciseMuscleSnapshot, loadOfWorkouts, MUSCLES, MUSCLE_NAME, normalizeMuscleGroups, hasExplicitMuscleMetadata } from './lib/muscles.js'
+import { exerciseMuscleSnapshot, loadOfWorkouts, MUSCLES, MUSCLE_NAME, FINE_MUSCLES, FINE_MUSCLE_NAME, normalizeMuscleGroups, hasExplicitMuscleMetadata } from './lib/muscles.js'
 import { parseImport, mergeImport } from './lib/import-csv.js'
 import { importHevyData, HevyApiError, HEVY_DEV_SETTINGS, mergeHevyRoutines } from './lib/import-hevy.js'
 import { buildPlanBundle, parsePlan, mergePlan, printPlan } from './lib/plan-share.js'
@@ -844,6 +844,15 @@ export const addToRoutineSheet = ex => ui().openSheet(close => <AddToRoutine ex=
 /* ============================ custom exercises (issue #11) ============================ */
 // Name + body part is all it takes — the exercise then behaves like any built-in one
 // (planning, logging, PRs, stats), just without an animation.
+// The 18 body-map slugs, plus finer picker-only choices (which delt head, which chest angle)
+// that fold back down to the same slug via muscles.js's ALIAS — a more precise pick than the
+// map can draw, not a new drawable region. A function, not a module-level constant, so it
+// re-translates on every render instead of freezing to whatever language was active on load.
+const muscleOptions = () => [
+  ...MUSCLES.map(m => ({ value: m, label: t(MUSCLE_NAME[m]) })),
+  ...FINE_MUSCLES.map(m => ({ value: m, label: t(FINE_MUSCLE_NAME[m]) })),
+]
+
 function CustomExForm({ existing, prefill, onDone, close }) {
   const nameRef = useRef(null)
   const onNameFocus = useSheetKeyboard(nameRef)
@@ -894,11 +903,11 @@ function CustomExForm({ existing, prefill, onDone, close }) {
     {bp && bp !== 'cardio' && <>
       <MultiSelectRow title={t('Primary muscle groups')} sheetTitle={t('Primary muscle groups')}
         values={primaries}
-        options={MUSCLES.map(m => ({ value: m, label: t(MUSCLE_NAME[m]) }))}
+        options={muscleOptions()}
         onToggle={togglePrimary} noneLabel={t('No explicit muscle group')} doneLabel={t('Done')} />
       <MultiSelectRow title={t('Additional muscle groups')} sheetTitle={t('Additional muscle groups')}
         values={secondaries}
-        options={MUSCLES.filter(m => !primaries.includes(m)).map(m => ({ value: m, label: t(MUSCLE_NAME[m]) }))}
+        options={muscleOptions().filter(o => !primaries.includes(o.value))}
         onToggle={toggleSecondary} noneLabel={t('No explicit muscle group')} doneLabel={t('Done')} />
     </>}
     {bp === 'cardio' && <div className="small dim row" style={{ marginBottom: 10, gap: 5 }}><Icon name="figureRun" style={{ fontSize: 13 }} />{t('Cardio exercises log time + speed instead of weight × reps.')}</div>}

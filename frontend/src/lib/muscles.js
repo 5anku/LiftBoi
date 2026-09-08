@@ -33,6 +33,18 @@ export const MUSCLE_NAME = {
   'hip-flexors': 'Hip flexors', calves: 'Calves', tibialis: 'Shins',
 }
 
+// Finer picker choices layered on top of MUSCLES, for exercises trained by a distinct angle
+// (which delt head, which chest angle) that the body map still only draws as one region — each
+// one resolves back down to its coarse MUSCLES slug via ALIAS below, so no body-map, recovery
+// or load-tracking code needed to change for these to work. Additive only: MUSCLES stays the
+// single source of truth for what the map can actually shade.
+export const FINE_MUSCLES = ['front delts', 'side delts', 'rear delts', 'upper chest', 'lower chest', 'upper abs', 'lower abs']
+export const FINE_MUSCLE_NAME = {
+  'front delts': 'Front delts', 'side delts': 'Side delts', 'rear delts': 'Rear delts',
+  'upper chest': 'Upper chest', 'lower chest': 'Lower chest',
+  'upper abs': 'Upper abs', 'lower abs': 'Lower abs',
+}
+
 // Every spelling that occurs in the dataset's `tg` and `sm` fields. null = not drawable.
 const ALIAS = {
   // primaries
@@ -52,6 +64,12 @@ const ALIAS = {
   groin: 'adductors', 'inner thighs': 'adductors',
   ankles: null, feet: null, hands: null, 'ankle stabilizers': null,
   sternocleidomastoid: null,
+  // finer picker choices (FINE_MUSCLES below) — same drawable region as their parent, just a
+  // more precise label to select/search/log against than the single body-map slug allows.
+  'front delts': 'deltoids', 'front deltoids': 'deltoids', 'anterior deltoids': 'deltoids',
+  'side delts': 'deltoids', 'side deltoids': 'deltoids', 'lateral deltoids': 'deltoids',
+  'rear delts': 'deltoids', 'posterior deltoids': 'deltoids',
+  'upper abs': 'abs', 'lower chest': 'chest',
 }
 
 // Custom exercises carry only a body part, so they fall back to it. Weights inside a
