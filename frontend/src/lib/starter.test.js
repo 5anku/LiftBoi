@@ -8,7 +8,10 @@ import { buildStarterPlan, starterPlanDays, starterPlanOptions, starterRoutines 
 // change-detector test); what's worth protecting is that every one is structurally sound.
 const EXTENDED_PLAN_IDS = [
   'ulppl', 'hit', 'pure-strength', 'pure-hypertrophy', 'classic-full-body',
-  'powerbuild-ul', 'ppl-6day', 'minmax', 'cutting', 'peak', 'travel', 'chest-back-focus'
+  'powerbuild-ul', 'ppl-6day', 'minmax', 'cutting', 'peak', 'travel', 'chest-back-focus',
+  'heavy_duty', 'min_max_4x', 'min_max_5x', 'min_max_phase2_4x', 'min_max_phase2_5x',
+  'powerbuilding_3_4x', 'powerbuilding_3_5x', 'upper_lower_4x_nippard',
+  'dlh_3day_ppl', 'dlh_6day_ppl', 'dlh_upper_lower_fullbody'
 ]
 
 // The approved prescription, written out again rather than imported: a test that reads the

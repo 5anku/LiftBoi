@@ -56,7 +56,11 @@ describe('starter plan chooser', () => {
       '5-Day Upper/Lower/Push/Pull/Legs', 'Minimalist HIT', 'Pure Strength', 'Pure Hypertrophy',
       'Classic Full-Body', 'Upper/Lower (Powerbuilding)', '6-Day PPL', 'Min-Max 4-Day',
       'Cutting-Phase Maintenance', 'Strength Peak / Test Block', 'Minimal Equipment / Travel',
-      'Chest/Back Focus Split'
+      'Chest/Back Focus Split',
+      'Heavy Duty', 'The Min-Max Program (4x)', 'The Min-Max Program (5 Days)',
+      'Min-Max Phase 2: Peak Physique (4x)', 'Min-Max Phase 2: Peak Physique (5x)',
+      'Powerbuilding 3.0 (4x)', 'Powerbuilding 3.0 (5x)', 'Upper/Lower Size and Strength Program (4x)',
+      '3-Day PPL (Condensed)', '6-Day PPL (Condensed)', 'Upper/Lower Split with Full-Body Variation'
     ])
     expect(rowFor(host, 'Upper / Lower').querySelector('.ss').textContent).toContain('4 days per week')
   })

@@ -107,7 +107,19 @@ const PLAN_COPY = {
   cutting: () => ({ name: t('Cutting-Phase Maintenance'), about: t('The 5-day split with accessories trimmed. Holds the line in a deficit instead of climbing.') }),
   peak: () => ({ name: t('Strength Peak / Test Block'), about: t('4-5 weeks ramping to a 1-rep test on squat, bench and deadlift.') }),
   travel: () => ({ name: t('Minimal Equipment / Travel'), about: t('Full body, dumbbells or bodyweight only. Hotel-gym friendly.') }),
-  'chest-back-focus': () => ({ name: t('Chest/Back Focus Split'), about: t('Chest emphasis one day, back emphasis the next, legs last. A menu of picks, fixed to one default per slot.') })
+  'chest-back-focus': () => ({ name: t('Chest/Back Focus Split'), about: t('Chest emphasis one day, back emphasis the next, legs last. A menu of picks, fixed to one default per slot.') }),
+
+  heavy_duty: () => ({ name: t('Heavy Duty'), about: t('Mike Mentzer: one set to true failure per exercise, 3x/week. Two stalled weeks in a row means a full week off.') }),
+  min_max_4x: () => ({ name: t('The Min-Max Program (4x)'), about: t('Jeff Nippard: low volume, high variety, 4x/week. Only the last set of each exercise goes to real RIR.') }),
+  min_max_5x: () => ({ name: t('The Min-Max Program (5 Days)'), about: t('Jeff Nippard: the Min-Max 4x split across a 5th day instead, with more room per muscle.') }),
+  min_max_phase2_4x: () => ({ name: t('Min-Max Phase 2: Peak Physique (4x)'), about: t('Jeff Nippard: the opposite of Min-Max — first set to failure, RIR loosens from there, with appended burnout sets.') }),
+  min_max_phase2_5x: () => ({ name: t('Min-Max Phase 2: Peak Physique (5x)'), about: t('Jeff Nippard: Phase 2 with a dedicated Arms day instead of folding arm work into the other four.') }),
+  powerbuilding_3_4x: () => ({ name: t('Powerbuilding 3.0 (4x)'), about: t('Jeff Nippard: one heavy top single per session on squat, bench or deadlift, then back-off and accessories.') }),
+  powerbuilding_3_5x: () => ({ name: t('Powerbuilding 3.0 (5x)'), about: t('Jeff Nippard: the same top-single-per-session structure with a 5th full-body session added.') }),
+  upper_lower_4x_nippard: () => ({ name: t('Upper/Lower Size and Strength Program (4x)'), about: t('Jeff Nippard: %1RM top sets on the main lifts plus a rich technique vocabulary — myo-reps, 21s, dropsets, weak-point slots.') }),
+  dlh_3day_ppl: () => ({ name: t('3-Day PPL (Condensed)'), about: t('Dysfunctional Lifter’s Handbook: push/pull/legs once a week each, double progression with a 5-10% guardrail per jump.') }),
+  dlh_6day_ppl: () => ({ name: t('6-Day PPL (Condensed)'), about: t('Dysfunctional Lifter’s Handbook: each PPL day twice a week with varied exercises the second time. Recommended 3-on/1-off/3-on.') }),
+  dlh_upper_lower_fullbody: () => ({ name: t('Upper/Lower Split with Full-Body Variation'), about: t('Dysfunctional Lifter’s Handbook: the same muscle gets a heavy day and a high-rep day on purpose. Deadlift day kept off squat day.') })
 }
 
 // Adds the plan's routines and puts them on its weekdays. Existing routines are never touched
