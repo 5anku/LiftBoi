@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { EXIDX } from './exercises.js'
 import { buildStarterPlan, starterPlanDays, starterPlanOptions, starterRoutines } from './starter.js'
+import { PROGRAM_BY_ID } from './coaches/index.js'
+
+// The 11 book-sourced plans (program-library-v2) each carry a real coach in programs.json —
+// every other plan (the original 4 templates, plus Program 11/chest-back-focus) predates the
+// coach engine and has none, which is fine: an untagged plan just gets no coach opinion.
+const COACHED_PLAN_IDS = [
+  'heavy_duty', 'min_max_4x', 'min_max_5x', 'min_max_phase2_4x', 'min_max_phase2_5x',
+  'powerbuilding_3_4x', 'powerbuilding_3_5x', 'upper_lower_4x_nippard',
+  'dlh_3day_ppl', 'dlh_6day_ppl', 'dlh_upper_lower_fullbody'
+]
 
 // The library plans added on top of the original four — RPE/volume-landmark programs sourced
 // from a specific written program, not generic templates. Their exercise picks and rep/RPE
@@ -114,6 +124,13 @@ describe.each(EXTENDED_PLAN_IDS)('extended program library: %s', planId => {
     for (const { routineId } of built.schedule) expect(routineIds.has(routineId)).toBe(true)
   })
 
+  // The coach engine (lib/coaches) resolves a routine's program through this tag — an untagged
+  // routine just gets no coach opinion, so a plan that forgot the tag wouldn't fail loudly
+  // anywhere else.
+  it('tags every built routine with its own plan id, for the coach engine to key off', () => {
+    for (const r of buildStarterPlan(planId).routines) expect(r.programId).toBe(planId)
+  })
+
   it('references only real exercises with positive sets/reps and non-negative seeded weight', () => {
     for (const r of buildStarterPlan(planId).routines) {
       expect(r.ex.length).toBeGreaterThan(0)
@@ -133,6 +150,16 @@ describe.each(EXTENDED_PLAN_IDS)('extended program library: %s', planId => {
     expect(new Set(ids).size).toBe(ids.length)
     expect(second.routines.some(r => ids.includes(r.id))).toBe(false)
     expect(first.routines[0].ex[0]).not.toBe(second.routines[0].ex[0])
+  })
+})
+
+describe('coach-engine wiring', () => {
+  it('resolves every book-sourced plan id to a real coach in programs.json', () => {
+    for (const id of COACHED_PLAN_IDS) expect(PROGRAM_BY_ID[id], id).toBeTruthy()
+  })
+
+  it('leaves the original templates and the menu-style plan without a coach', () => {
+    for (const id of ['ppl', 'upper-lower', 'full-body', '5x5', 'chest-back-focus']) expect(PROGRAM_BY_ID[id]).toBeUndefined()
   })
 })
 

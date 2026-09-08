@@ -16,13 +16,16 @@ import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, finishWo
 import { effortColor } from '../lib/effort.js'
 import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
-import { nextPrescription, applyPrescription, defaultIncrement, weightIncrement, stepWeight } from '../lib/progression.js'
+import { nextPrescription, applyPrescription, defaultIncrement, weightIncrement, stepWeight, sessionsFor } from '../lib/progression.js'
 import { progressionGuidance } from '../lib/progression-copy.js'
+import { evaluate } from '../lib/coaches/index.js'
 import { glyphOf } from '../lib/glyphs.js'
 import { isWarmupRow, isDropSet, isRestPauseSet, dropsOf, clustersOf, addDrop, addCluster, removeDropAt, removeClusterAt, setDropAt, setClusterAt, nextDropWeight, nextBurstReps } from '../lib/workout-model.js'
 import { canMoveActiveWorkoutUnit, moveActiveWorkoutUnit } from '../lib/active-workout-order.js'
 
 const SWIPE_MIN_DISTANCE = 48
+
+const COACH_ICON = { deload: 'arrowDown', add_weight: 'arrowUp', add_volume: 'plus', swap_exercise: 'shuffle', backoff_now: 'flag', hold: 'lightbulb' }
 const SWIPE_AXIS_RATIO = 1.25
 const SWIPE_IGNORED_TARGETS = 'button,input,textarea,select,a,[role="button"],[role="checkbox"],[role="switch"],[role="slider"],[contenteditable="true"],.exmedia,[data-swipe-ignore]'
 
@@ -119,6 +122,10 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
   // the session was built so the reason matches the numbers already in the rows.
   const plan = entry.plan
   const guidance = progressionGuidance(plan)
+  // The active program's own coach, if it has anything to say about this exercise (issue:
+  // Stockfish Coach). Computed once when the session was built, same as `plan` above, so what's
+  // shown here always matches the numbers already sitting in the rows.
+  const coach = entry.coach || []
   // A bodyweight set has no weight to type, so the column is not there (issue #32) — one
   // stepper instead of two, which is the whole point of the flag. Adding a belt weight in the
   // config brings it back, now labelled as the addition it is.
@@ -292,6 +299,13 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
       <Icon name={plan.kind === 'up' ? 'arrowUp' : plan.kind === 'deload' ? 'arrowDown' : 'lightbulb'} />
       <span><strong>{t(guidance.policyLabel)}</strong> · {t(...guidance.why)}</span>
     </button>}
+    {/* One line per Suggestion from the active program's coach — plain English, not run through
+        t(): the message is built with numbers already interpolated in, so there's no fixed
+        template a translation could key off (see lib/coaches). */}
+    {coach.map((s, i) => <div key={i} className={'progline' + (s.severity !== 'info' ? ' warn' : '')}>
+      <Icon name={COACH_ICON[s.signal] || 'lightbulb'} />
+      <span><strong>{t('Coach')}</strong> · {s.message}</span>
+    </div>)}
     <div className="card" style={{ marginTop: 10, marginBottom: 0 }}>
       {/* the header carries the same eff3 sizing as the rows, or the labels drift off their columns */}
       <div className={'sethead' + (col3 ? ' eff3' : '')}><span className="n-sp" /><span className="w-sp">{col1.hd}</span>{col2 && <span className="r-sp">{col2.hd}</span>}{col3 && <span className="eff-sp">{col3.hd}</span>}{timed && <span className="ck-sp" />}<span className="ck-sp" /></div>
@@ -597,6 +611,7 @@ function ActiveWorkout() {
         activeEntry.target = { ...cfg }
         activeEntry.plan = plan
         activeEntry.sets = [...doneWarm, ...freshWarm.slice(doneWarm.length), ...doneWork, ...freshWork.slice(doneWork.length)]
+        activeEntry.coach = activeRoutine?.programId ? evaluate(activeRoutine.programId, sessionsFor(s, activeEntry.id, full), full) : []
       })
     }, null, routine)
   }

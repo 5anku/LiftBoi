@@ -869,8 +869,11 @@ const mkEx = ([id, sets, reps, opts]) => ({
   ...(opts?.sg ? { sg: opts.sg } : {})
 })
 
-const build = routines =>
-  routines.map(([, name, emoji, list]) => ({ id: uid(), name, emoji, ex: list.map(mkEx) }))
+// programId tags the routine for the coach engine (lib/coaches) — evaluate() looks it up in
+// programs.json and no-ops for a plan id it doesn't know (the original four templates, or a
+// freestyle/user-made routine with no programId at all), so tagging every plan here is harmless.
+const build = (routines, programId) =>
+  routines.map(([, name, emoji, list]) => ({ id: uid(), name, emoji, ex: list.map(mkEx), ...(programId ? { programId } : {}) }))
 
 // Fresh routine objects (new ids) — [push, pull, legs]. The demo build seeds a history on
 // top of exactly these three, so this entry point keeps its shape.
@@ -889,7 +892,7 @@ export const starterPlanDays = id => PLANS[id]?.schedule.map(([day]) => day) ?? 
 export const buildStarterPlan = id => {
   const plan = PLANS[id]
   if (!plan) return null
-  const routines = build(plan.routines)
+  const routines = build(plan.routines, id)
   // key → the id just minted for it, so the schedule below names its routine
   const byKey = Object.fromEntries(plan.routines.map(([key], i) => [key, routines[i].id]))
   return { routines, schedule: plan.schedule.map(([day, key]) => ({ day, routineId: byKey[key] })) }

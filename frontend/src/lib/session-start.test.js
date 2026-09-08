@@ -20,4 +20,26 @@ describe('buildSessionEntries', () => {
     const { entries } = buildSessionEntries(st, r)
     expect(entries[0].sets.every(s => s.sec === 30)).toBe(true)
   })
+
+  // The active program's coach (lib/coaches) — a routine only gets asked when starter.js tagged
+  // it with a programId, same gate progression itself uses for excludeFromProgression.
+  it('asks the active program’s coach when the routine carries a programId', () => {
+    const stWithHistory = { unit: 'kg', exWeights: {}, workouts: [{ d: '2024-01-01', entries: [{ id: '0025', sets: [{ done: true, r: 12, w: 50 }] }] }] }
+    const r = { id: 'r', programId: 'heavy_duty', ex: [{ id: '0025', sets: 1, reps: 8, weight: 50, prog: 'off' }] }
+    const { entries } = buildSessionEntries(stWithHistory, r)
+    expect(entries[0].coach[0].signal).toBe('add_weight')
+    expect(entries[0].coach[0].source_coach).toBe('mentzer')
+  })
+
+  it('has nothing to say for a routine with no recognized program', () => {
+    const r = { id: 'r', ex: [{ id: '0025', sets: 1, reps: 8, weight: 50, prog: 'off' }] }
+    const { entries } = buildSessionEntries(st, r)
+    expect(entries[0].coach).toEqual([])
+  })
+
+  it('skips the coach on a planned deload, same as it skips progression', () => {
+    const r = { id: 'r', programId: 'heavy_duty', excludeFromProgression: true, ex: [{ id: '0025', sets: 1, reps: 8, weight: 50 }] }
+    const { entries } = buildSessionEntries(st, r)
+    expect(entries[0].coach).toEqual([])
+  })
 })

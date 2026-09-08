@@ -4,7 +4,8 @@
 // Imports both history.js and progression.js (which itself imports history.js); nothing in
 // either imports this file, so there is no cycle.
 import { buildSets, applyIntensifierPlan, modeOf } from './history.js'
-import { nextPrescription, applyPrescription, defaultIncrement, weightIncrement } from './progression.js'
+import { nextPrescription, applyPrescription, defaultIncrement, weightIncrement, sessionsFor } from './progression.js'
+import { evaluate } from './coaches/index.js'
 
 export function buildSessionEntries(st, r) {
   // The prescription is applied as the session is built, so you walk up to the bar with the
@@ -18,7 +19,11 @@ export function buildSessionEntries(st, r) {
     // default for its optional load.
     const step = modeOf(cfg) === 'reps' ? weightIncrement(cfg, st.unit) : defaultIncrement(cfg.id, st.unit)
     const sets = applyIntensifierPlan(applyPrescription(buildSets(st, cfg, { step, useTarget: plan.kind === 'off' }), plan, step), cfg)
-    return { id: cfg.id, sg: cfg.sg, target: { ...cfg }, plan, sets }
+    // The coach only has an opinion when the routine came from a program it recognizes (see
+    // starter.js's programId tag) and progression itself isn't switched off for this entry —
+    // a planned deload shouldn't also get told to add weight or deload again.
+    const coach = !excluded && r?.programId ? evaluate(r.programId, sessionsFor(st, cfg.id, cfg), cfg) : []
+    return { id: cfg.id, sg: cfg.sg, target: { ...cfg }, plan, sets, coach }
   })
   return { entries, excluded }
 }
