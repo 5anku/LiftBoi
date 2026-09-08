@@ -1,0 +1,163 @@
+{
+  "programs": [
+    {
+      "id": "heavy_duty",
+      "name": "Heavy Duty",
+      "source": "Mike Mentzer",
+      "coach_id": "mentzer",
+      "structure_type": "fixed_list",
+      "days_per_week": 3,
+      "deload_trigger": "weeks_stalled",
+      "deload_trigger_value": 2,
+      "volume_behavior": "fixed",
+      "progression_method": "instant_weight_add"
+    },
+    {
+      "id": "min_max_4x",
+      "name": "The Min-Max Program (4x)",
+      "source": "Jeff Nippard",
+      "coach_id": "nippard",
+      "mechanic_variant": "last_set_failure_tightening",
+      "structure_type": "fixed_list",
+      "days_per_week": 4,
+      "block_length_weeks": 7,
+      "deload_trigger": "scheduled",
+      "deload_trigger_value": 7,
+      "volume_behavior": "climbing",
+      "progression_method": "double_progression_range_extend"
+    },
+    {
+      "id": "min_max_5x",
+      "name": "The Min-Max Program (5 Days)",
+      "source": "Jeff Nippard",
+      "coach_id": "nippard",
+      "mechanic_variant": "last_set_failure_tightening",
+      "structure_type": "fixed_list",
+      "days_per_week": 5,
+      "block_length_weeks": 7,
+      "deload_trigger": "scheduled",
+      "deload_trigger_value": 7,
+      "volume_behavior": "climbing",
+      "progression_method": "double_progression_range_extend"
+    },
+    {
+      "id": "min_max_phase2_4x",
+      "name": "Min-Max Phase 2: Peak Physique (4x)",
+      "source": "Jeff Nippard",
+      "coach_id": "nippard",
+      "mechanic_variant": "first_set_failure_loosening",
+      "structure_type": "fixed_list",
+      "days_per_week": 4,
+      "block_length_weeks": 7,
+      "deload_trigger": "scheduled",
+      "deload_trigger_value": 7,
+      "volume_behavior": "climbing_quality_reps",
+      "progression_method": "double_progression_range_extend",
+      "notes": "burnout-set pattern: repeated exercise listing at 0 warmup sets + high reps = appended set, not new exercise"
+    },
+    {
+      "id": "min_max_phase2_5x",
+      "name": "Min-Max Phase 2: Peak Physique (5x)",
+      "source": "Jeff Nippard",
+      "coach_id": "nippard",
+      "mechanic_variant": "first_set_failure_loosening",
+      "structure_type": "fixed_list",
+      "days_per_week": 5,
+      "block_length_weeks": 7,
+      "deload_trigger": "scheduled",
+      "deload_trigger_value": 7,
+      "volume_behavior": "climbing_quality_reps",
+      "progression_method": "double_progression_range_extend",
+      "notes": "restores dedicated Arms day dropped in the 4x version"
+    },
+    {
+      "id": "powerbuilding_3_4x",
+      "name": "Powerbuilding 3.0 (4x)",
+      "source": "Jeff Nippard",
+      "coach_id": "nippard",
+      "mechanic_variant": "top_set_pct1rm_rpe_wave",
+      "structure_type": "fixed_list",
+      "days_per_week": 4,
+      "deload_trigger": "scheduled",
+      "volume_behavior": "climbing_undulating",
+      "progression_method": "top_set_backoff_pct1rm",
+      "notes": "only Week 1 extracted; later-week %1RM wave progression still needed"
+    },
+    {
+      "id": "powerbuilding_3_5x",
+      "name": "Powerbuilding 3.0 (5x)",
+      "source": "Jeff Nippard",
+      "coach_id": "nippard",
+      "mechanic_variant": "top_set_pct1rm_rpe_wave",
+      "structure_type": "fixed_list",
+      "days_per_week": 5,
+      "deload_trigger": "scheduled",
+      "volume_behavior": "climbing_undulating",
+      "progression_method": "top_set_backoff_pct1rm",
+      "notes": "only Week 1 extracted; later-week %1RM wave progression still needed"
+    },
+    {
+      "id": "upper_lower_4x_nippard",
+      "name": "Upper/Lower Size and Strength Program (4x)",
+      "source": "Jeff Nippard",
+      "coach_id": "nippard",
+      "mechanic_variant": "pct1rm_rpe_periodized_technique_rich",
+      "structure_type": "fixed_list",
+      "days_per_week": 4,
+      "deload_trigger": "unknown",
+      "volume_behavior": "climbing",
+      "progression_method": "top_set_backoff_pct1rm",
+      "technique_vocabulary": ["eccentric_accentuated", "constant_tension", "myo_reps", "twenty_ones", "labeled_superset", "dropset", "weak_point_slot"],
+      "notes": "organized in Waves, not fixed weeks; deload trigger and later waves not yet extracted"
+    },
+    {
+      "id": "dlh_3day_ppl",
+      "name": "3-Day PPL (Condensed)",
+      "source": "Dysfunctional Lifter's Handbook",
+      "coach_id": "wood",
+      "structure_type": "fixed_list",
+      "days_per_week": 3,
+      "deload_trigger": "plateau_weeks",
+      "volume_behavior": "fixed",
+      "progression_method": "double_progression_guardrail_5_10pct",
+      "failure_allocation": "compound_0_1_rir_isolation_true_failure"
+    },
+    {
+      "id": "dlh_6day_ppl",
+      "name": "6-Day PPL (Condensed)",
+      "source": "Dysfunctional Lifter's Handbook",
+      "coach_id": "wood",
+      "structure_type": "fixed_list",
+      "days_per_week": 6,
+      "deload_trigger": "plateau_weeks",
+      "volume_behavior": "fixed",
+      "progression_method": "double_progression_guardrail_5_10pct",
+      "failure_allocation": "compound_0_1_rir_isolation_true_failure",
+      "notes": "each PPL day hit twice/week with varied exercises second time; recommend 3-on/1-off/3-on"
+    },
+    {
+      "id": "dlh_upper_lower_fullbody",
+      "name": "Upper/Lower Split with Full-Body Variation",
+      "source": "Dysfunctional Lifter's Handbook",
+      "coach_id": "wood",
+      "structure_type": "fixed_list",
+      "days_per_week": 5,
+      "deload_trigger": "block_weeks",
+      "deload_trigger_value": 5,
+      "volume_behavior": "climbing_hypertrophy_days_only",
+      "progression_method": "mixed_double_progression_and_fixed_step",
+      "failure_allocation": "compound_0_1_rir_isolation_true_failure",
+      "notes": "daily undulating periodization by design: same muscle sees heavy/low-rep and moderate/high-rep days on purpose; deadlift day always separated from squat day"
+    }
+  ],
+  "unmapped_coaches": [
+    {
+      "coach_id": "rp",
+      "reason": "Israetel & Hoffmann's 'How Much Should I Train' is pure theory, contains no workout programs"
+    },
+    {
+      "coach_id": "sanku",
+      "reason": "reserved for the user's own future programs, not book-sourced"
+    }
+  ]
+}

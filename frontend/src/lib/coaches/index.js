@@ -1,0 +1,35 @@
+// The "Stockfish Coach" dispatch: called on-demand with one exercise's logged history, returns
+// whatever that program's own coach has to say about it. No memory between calls, no blending
+// across coaches at runtime — a program picks one coach via programs.json's coach_id, and that's
+// the only rule set that ever judges it. See feature-stockfish-coach.md for the full spec.
+import programsData from './programs.json' with { type: 'json' }
+import { evaluateMentzer } from './mentzer.coach.js'
+import { evaluateWood } from './wood.coach.js'
+import { evaluateNippard } from './nippard.coach.js'
+import { evaluateSanku } from './sanku.coach.js'
+
+export const PROGRAM_BY_ID = Object.fromEntries(programsData.programs.map(p => [p.id, p]))
+
+/**
+ * @param {string} programId - a programs.json id
+ * @param {Array} sessions - oldest-first, from progression.js's sessionsFor(S, exId, cfg)
+ * @param {{ id: string }} cfg - the routine's own prescription for this exercise
+ * @returns {object[]} 0+ Suggestion objects. An unknown program, or a coach with nothing to say
+ *   yet (no history logged), comes back as an empty array rather than throwing — evaluate() is
+ *   meant to be called freely from the UI without a guard at every call site.
+ */
+export function evaluate(programId, sessions, cfg) {
+  const program = PROGRAM_BY_ID[programId]
+  if (!program) return []
+
+  switch (program.coach_id) {
+    case 'mentzer': { const s = evaluateMentzer(sessions, cfg); return s ? [s] : [] }
+    case 'wood': { const s = evaluateWood(sessions, cfg); return s ? [s] : [] }
+    case 'nippard': { const s = evaluateNippard(sessions, cfg, program.mechanic_variant); return s ? [s] : [] }
+    case 'sanku': return evaluateSanku(sessions, cfg)
+    // RP has no owned program yet (see programs.json's unmapped_coaches) and its interface is a
+    // different shape besides — weekly-sets-per-muscle-group, not one exercise's session history.
+    // Call evaluateRP() directly once a program tags coach_id: "rp".
+    default: return []
+  }
+}
