@@ -20,6 +20,7 @@ import { Button, Check, NumberField } from '../components/ui.jsx'
 import { nextPrescription, applyPrescription, defaultIncrement, weightIncrement, stepWeight, sessionsFor } from '../lib/progression.js'
 import { progressionGuidance } from '../lib/progression-copy.js'
 import { evaluate } from '../lib/coaches/index.js'
+import { backoffFor } from '../lib/coaches/shared/progression-mechanics.js'
 import { glyphOf } from '../lib/glyphs.js'
 import { isWarmupRow, isDropSet, isRestPauseSet, dropsOf, clustersOf, addDrop, addCluster, removeDropAt, removeClusterAt, setDropAt, setClusterAt, nextDropWeight, nextBurstReps } from '../lib/workout-model.js'
 import { canMoveActiveWorkoutUnit, moveActiveWorkoutUnit } from '../lib/active-workout-order.js'
@@ -71,7 +72,7 @@ function Elapsed({ start }) {
 }
 
 /* ---------- one exercise block (reps: weight×reps · time: a held duration · cardio: duration+speed) ---------- */
-function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemoveSet, onAddWarmup, onRemoveSetAt, onStartTimed, onPairPrev, onPairNext, onSetRowRef, onProgressionSettings, onSwap, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onRemoveExercise, busy }) {
+function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemoveSet, onAddWarmup, onRemoveSetAt, onMarkFailed, onStartTimed, onPairPrev, onPairNext, onSetRowRef, onProgressionSettings, onSwap, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onRemoveExercise, busy }) {
   const S = useStore(s => s.S)
   const update = useStore(s => s.update)
   const working = useUI(s => s.work)
@@ -215,6 +216,7 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
       items: [
         !warm && mode === 'reps' && !isRestPauseSet(s) && { icon: 'arrowDown', label: t('Drop set'), sub: t('+ Drop'), onClick: () => addDropRow(i) },
         !warm && mode === 'reps' && !isDropSet(s) && { icon: 'bolt', label: t('Rest-pause burst'), sub: t('+ Burst'), onClick: () => addBurstRow(i) },
+        !warm && mode === 'reps' && { icon: 'xmark', label: t('Mark as failed'), sub: t('Offers a backoff set'), danger: true, onClick: () => onMarkFailed(i) },
         { icon: 'trash', label: t('Remove this set'), danger: true, disabled: entry.sets.length <= 1, onClick: () => onRemoveSetAt(i) },
       ],
     })
@@ -483,6 +485,23 @@ function ActiveWorkout() {
     e.sets = insertWarmupRow(e.sets, m, e.target || {}, defaultIncrement(e.id, S.unit))
   })
   const removeSetAt = (idx, i) => mutEntry(idx, e => { e.sets = removeRowAt(e.sets, i) })
+  // Checks the set off exactly as logged — a failed lift is a real result, not erased data, so
+  // whatever reps were already typed (0 for a total miss) stay put — then offers a backoff set
+  // sized off that same number. The offer always fires: choosing to mark a set failed is already
+  // the signal, unlike the coach's own passive suggestion which gates on how big the miss was.
+  const markFailedAt = (idx, i) => {
+    const entry = A.entries[idx]
+    const row = entry.sets[i]
+    const achieved = row.r || 0
+    mutEntry(idx, e => { e.sets[i] = { ...e.sets[i], done: true } })
+    const { weight, reps } = backoffFor(row.w || 0, achieved)
+    confirmSheet({
+      title: t('Add a backoff set?'),
+      message: `Want a backoff set? ~${weight} ${S.unit} for ~${reps} reps, to genuine exhaustion.`,
+      confirmText: t('Add backoff set'),
+      onConfirm: () => mutEntry(idx, e => { e.sets.splice(i + 1, 0, { w: weight, r: reps, done: false }) })
+    })
+  }
   const pairAt = (first, second) => update(s => {
     s.active.entries = pairAdjacent(s.active.entries, first, second)
   })
@@ -529,6 +548,7 @@ function ActiveWorkout() {
     onRemoveSet: () => removeSet(idx),
     onAddWarmup: () => addWarmup(idx),
     onRemoveSetAt: i => removeSetAt(idx, i),
+    onMarkFailed: i => markFailedAt(idx, i),
     onStartTimed: i => startTimed(idx, i),
     onProgressionSettings: () => openProgressionSettings(idx),
   })

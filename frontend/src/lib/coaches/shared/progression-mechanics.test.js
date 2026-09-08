@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { doubleProgression, repWord } from './progression-mechanics.js'
+import { doubleProgression, repWord, backoffFor } from './progression-mechanics.js'
 
 // Sessions in progression.js's own readSession() shape — oldest first.
 const session = (weight, ok, low = ok ? 8 : 6) => ({ mode: 'reps', goal: 8, reps: [low], weight, count: 1, low, amrap: low, ok })
@@ -50,5 +50,21 @@ describe('repWord', () => {
     expect(repWord(0)).toBe('0 reps')
     expect(repWord(2)).toBe('2 reps')
     expect(repWord(8)).toBe('8 reps')
+  })
+})
+
+describe('backoffFor', () => {
+  it('halves the weight and doubles the achieved reps', () => {
+    expect(backoffFor(100, 5)).toEqual({ weight: 50, reps: 10 })
+  })
+
+  it('rounds the halved weight to the nearest 0.5 (real plate math)', () => {
+    // half of 105 is 52.5 -- already on a 0.5 grid, so it should land exactly there, not drift.
+    expect(backoffFor(105, 3)).toEqual({ weight: 52.5, reps: 6 })
+  })
+
+  it('still prescribes a real backoff after a total failure (0 reps achieved)', () => {
+    // A missed lift isn't "0 reps forever" -- floor the reps at 1 so doubling still means something.
+    expect(backoffFor(190, 0)).toEqual({ weight: 95, reps: 2 })
   })
 })

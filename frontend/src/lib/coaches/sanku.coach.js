@@ -3,7 +3,7 @@
 // uses, but owns two things exclusively: a 3-stalled-session deload (one more crack than
 // Mentzer's 2-week rule) that overrides a scheduled deload if one exists, and the backoff prompt
 // — never auto-applied, since it's gated on feel, not automatic on every missed rep.
-import { doubleProgression, repWord } from './shared/progression-mechanics.js'
+import { doubleProgression, repWord, backoffFor } from './shared/progression-mechanics.js'
 
 const DEFAULTS = { bottom: 6, top: 10, inc: 2.5, deloadAt: 3 }
 // Missing the target by this many reps or more is what "the pattern suggests you could've
@@ -34,8 +34,7 @@ export function evaluateSanku(sessions, cfg) {
 
   const last = sessions[sessions.length - 1]
   if (last && !last.ok && (last.goal - last.low) >= BACKOFF_SHORTFALL) {
-    const backoffWeight = Math.round(last.weight * 0.5 * 2) / 2
-    const backoffReps = Math.max(1, last.low) * 2
+    const { weight: backoffWeight, reps: backoffReps } = backoffFor(last.weight, last.low)
     out.push({
       lift: cfg.id, signal: 'backoff_now', severity: 'info',
       message: `Missed by ${repWord(last.goal - last.low)} — want a backoff set? ~${backoffWeight} for ~${repWord(backoffReps)}, to genuine exhaustion. Your call.`,

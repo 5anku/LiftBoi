@@ -9,6 +9,22 @@ import { stallCount, snapWeight } from '../../progression.js'
 export const repWord = n => n === 1 ? '1 rep' : `${n} reps`
 
 /**
+ * The backoff Sanku's coach prompts after a miss: ~half the weight, ~double the reps, to
+ * genuine exhaustion. A live "mark this set failed" action needs the exact same math with only
+ * the one set in front of it — no session history — so it lives here rather than inside
+ * sanku.coach.js, which calls this too instead of keeping its own copy.
+ * @param {number} weight - the weight actually lifted on the failed set
+ * @param {number} achievedReps - reps actually completed (0 for a total failure)
+ * @returns {{ weight: number, reps: number }}
+ */
+export function backoffFor(weight, achievedReps) {
+  return {
+    weight: Math.round(weight * 0.5 * 2) / 2,
+    reps: Math.max(1, achievedReps) * 2
+  }
+}
+
+/**
  * @param {Array} sessions - oldest-first, from progression.js's sessionsFor()
  * @param {{ bottom: number, top: number, inc: number, deloadAt?: number, maxJumpPct?: number, roundTo?: number }} cfg
  *   maxJumpPct caps the weight increment at that percentage of the current weight — Wood's

@@ -1153,10 +1153,10 @@ describe('workout controls: the more menu and the set menu', () => {
     expect(mocks.exerciseHistorySheet).toHaveBeenCalledWith('plain-row')
   })
 
-  it('opens a per-set menu from the set number with drop, burst and remove', async () => {
+  it('opens a per-set menu from the set number with drop, burst, mark-failed and remove', async () => {
     await mount([exercise('plain-bench', [false, false])])
     await act(async () => { container.querySelector('button[aria-label="Set 2"]').dispatchEvent(new dom.Event('click', { bubbles: true })) })
-    expect(lastMenu().items.filter(Boolean).map(it => it.label)).toEqual(['Drop set', 'Rest-pause burst', 'Remove this set'])
+    expect(lastMenu().items.filter(Boolean).map(it => it.label)).toEqual(['Drop set', 'Rest-pause burst', 'Mark as failed', 'Remove this set'])
 
     await act(async () => { item('Drop set').onClick() })
     expect(mocks.S.active.entries[0].sets[1].drops?.length).toBe(1)
@@ -1164,6 +1164,33 @@ describe('workout controls: the more menu and the set menu', () => {
     await act(async () => { container.querySelector('button[aria-label="Set 2"]').dispatchEvent(new dom.Event('click', { bubbles: true })) })
     await act(async () => { item('Remove this set').onClick() })
     expect(mocks.S.active.entries[0].sets.length).toBe(1)
+  })
+
+  it('marking a set failed checks it off as logged and offers a sized backoff set', async () => {
+    // A total miss on 190kg -- 0 reps actually completed, exactly the freestyle case that
+    // prompted this feature (a deadlift attempt with nothing to show for it).
+    await mount([exercise('plain-bench', [false], { sets: [{ w: 190, r: 0, done: false }] })])
+    await act(async () => { container.querySelector('button[aria-label="Set 1"]').dispatchEvent(new dom.Event('click', { bubbles: true })) })
+    await act(async () => { item('Mark as failed').onClick() })
+
+    // Checked off exactly as logged -- a failure is a real result, not erased data.
+    expect(mocks.S.active.entries[0].sets[0]).toMatchObject({ w: 190, r: 0, done: true })
+    expect(mocks.confirmSheet).toHaveBeenCalledOnce()
+    const call = mocks.confirmSheet.mock.calls[0][0]
+    expect(call.message).toContain('95') // half of 190
+    expect(call.message).toContain('2 reps') // floor(0) -> 1, doubled
+
+    await act(async () => { call.onConfirm() })
+    expect(mocks.S.active.entries[0].sets[1]).toMatchObject({ w: 95, r: 2, done: false })
+  })
+
+  it('does not add a backoff set until the prompt is confirmed', async () => {
+    await mount([exercise('plain-bench', [false], { sets: [{ w: 100, r: 3, done: false }] })])
+    await act(async () => { container.querySelector('button[aria-label="Set 1"]').dispatchEvent(new dom.Event('click', { bubbles: true })) })
+    await act(async () => { item('Mark as failed').onClick() })
+
+    expect(mocks.S.active.entries[0].sets).toHaveLength(1)
+    expect(mocks.S.active.entries[0].sets[0].done).toBe(true)
   })
 
   it('brings the legacy button rows back per switch', async () => {
