@@ -4,6 +4,7 @@
 // than a stall-count one, so a coach here never calls a deload on its own — that's the block's
 // own week count, which isn't tracked yet (see the open question in feature-stockfish-coach.md).
 import { snapWeight } from '../progression.js'
+import { repWord } from './shared/progression-mechanics.js'
 
 export const VARIANTS = [
   'last_set_failure_tightening',
@@ -41,13 +42,13 @@ export function evaluateNippard(sessions, cfg, variant) {
     if (r.kind === 'first') return null
     if (r.kind === 'up') {
       return suggest('add_weight', 'action',
-        `Every set hit the top of the range — up to ${r.weight}, back to ${r.reps} reps.`,
+        `Every set hit the top of the range — up to ${r.weight}, back to ${repWord(r.reps)}.`,
         'double_progression_range_extend')
     }
     return suggest('hold', 'info',
       r.extended
-        ? `Same weight, range extends to ${r.reps} — the block's own way of avoiding a reset.`
-        : `Same weight — aim for ${r.reps} reps this time.`,
+        ? `Same weight, range extends to ${repWord(r.reps)} — the block's own way of avoiding a reset.`
+        : `Same weight — aim for ${repWord(r.reps)} this time.`,
       'double_progression_range_extend')
   }
 

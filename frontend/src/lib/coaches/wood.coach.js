@@ -2,7 +2,7 @@
 // on any single jump — the book's own stated ceiling, not a per-exercise choice. Deload is a
 // plateau call ("a couple of weeks"), not a fixed number, so this reuses the shared utility's
 // own session-count stall threshold rather than inventing a calendar rule Mentzer already owns.
-import { doubleProgression } from './shared/progression-mechanics.js'
+import { doubleProgression, repWord } from './shared/progression-mechanics.js'
 
 const DEFAULTS = { bottom: 8, top: 12, inc: 2.5, maxJumpPct: 7.5, deloadAt: 3 }
 
@@ -21,7 +21,7 @@ export function evaluateWood(sessions, cfg) {
   if (r.kind === 'first') return null
   if (r.kind === 'up') {
     return suggest('add_weight', 'action',
-      `Top of the ${opts.bottom}-${opts.top} range every set — up to ${r.weight}, back to ${r.reps} reps.`,
+      `Top of the ${opts.bottom}-${opts.top} range every set — up to ${r.weight}, back to ${repWord(r.reps)}.`,
       'double_progression_guardrail')
   }
   if (r.kind === 'deload') {
@@ -29,5 +29,5 @@ export function evaluateWood(sessions, cfg) {
       `Plateaued a couple of weeks running — take a deload week before pushing the range again.`,
       'plateau_deload')
   }
-  return suggest('hold', 'info', `Same weight — aim for ${r.reps} reps this time.`, 'double_progression_guardrail')
+  return suggest('hold', 'info', `Same weight — aim for ${repWord(r.reps)} this time.`, 'double_progression_guardrail')
 }

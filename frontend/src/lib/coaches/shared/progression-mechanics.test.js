@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { doubleProgression } from './progression-mechanics.js'
+import { doubleProgression, repWord } from './progression-mechanics.js'
 
 // Sessions in progression.js's own readSession() shape — oldest first.
 const session = (weight, ok, low = ok ? 8 : 6) => ({ mode: 'reps', goal: 8, reps: [low], weight, count: 1, low, amrap: low, ok })
@@ -39,5 +39,16 @@ describe('doubleProgression', () => {
     expect(r.weight).toBeLessThan(50)
     expect(r.reps).toBe(6)
     expect(r.stalls).toBe(3)
+  })
+})
+
+describe('repWord', () => {
+  // A real bug caught live: a session with one missed set (logged 0) aimed for "1 reps" —
+  // grammatically wrong, and every coach message that reports a rep count can hit this.
+  it('keeps 1 singular and everything else plural', () => {
+    expect(repWord(1)).toBe('1 rep')
+    expect(repWord(0)).toBe('0 reps')
+    expect(repWord(2)).toBe('2 reps')
+    expect(repWord(8)).toBe('8 reps')
   })
 })

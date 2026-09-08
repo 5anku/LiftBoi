@@ -3,7 +3,7 @@
 // uses, but owns two things exclusively: a 3-stalled-session deload (one more crack than
 // Mentzer's 2-week rule) that overrides a scheduled deload if one exists, and the backoff prompt
 // — never auto-applied, since it's gated on feel, not automatic on every missed rep.
-import { doubleProgression } from './shared/progression-mechanics.js'
+import { doubleProgression, repWord } from './shared/progression-mechanics.js'
 
 const DEFAULTS = { bottom: 6, top: 10, inc: 2.5, deloadAt: 3 }
 // Missing the target by this many reps or more is what "the pattern suggests you could've
@@ -24,12 +24,12 @@ export function evaluateSanku(sessions, cfg) {
 
   if (r.kind === 'first') return out
   if (r.kind === 'up') {
-    out.push(suggest('add_weight', 'action', `Top of the range every set — up to ${r.weight}, back to ${r.reps} reps.`, 'double_progression'))
+    out.push(suggest('add_weight', 'action', `Top of the range every set — up to ${r.weight}, back to ${repWord(r.reps)}.`, 'double_progression'))
   } else if (r.kind === 'deload') {
     out.push(suggest('deload', 'action',
       `Stalled 3 sessions running — deload now, even ahead of a scheduled one.`, 'stalled_sessions_deload'))
   } else {
-    out.push(suggest('hold', 'info', `Same weight — aim for ${r.reps} reps this time.`, 'double_progression'))
+    out.push(suggest('hold', 'info', `Same weight — aim for ${repWord(r.reps)} this time.`, 'double_progression'))
   }
 
   const last = sessions[sessions.length - 1]
@@ -38,7 +38,7 @@ export function evaluateSanku(sessions, cfg) {
     const backoffReps = Math.max(1, last.low) * 2
     out.push({
       lift: cfg.id, signal: 'backoff_now', severity: 'info',
-      message: `Missed by ${last.goal - last.low} reps — want a backoff set? ~${backoffWeight} for ~${backoffReps} reps, to genuine exhaustion. Your call.`,
+      message: `Missed by ${repWord(last.goal - last.low)} — want a backoff set? ~${backoffWeight} for ~${repWord(backoffReps)}, to genuine exhaustion. Your call.`,
       source_coach: 'sanku', source_rule: 'backoff_prompt'
     })
   }

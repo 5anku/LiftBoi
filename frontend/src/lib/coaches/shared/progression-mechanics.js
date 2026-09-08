@@ -5,6 +5,9 @@
 // Reuses progression.js's own session shape and stall-counting rather than inventing a new one.
 import { stallCount, snapWeight } from '../../progression.js'
 
+// "1 rep" reads right; "1 reps" doesn't. Every coach message built off a rep count uses this.
+export const repWord = n => n === 1 ? '1 rep' : `${n} reps`
+
 /**
  * @param {Array} sessions - oldest-first, from progression.js's sessionsFor()
  * @param {{ bottom: number, top: number, inc: number, deloadAt?: number, maxJumpPct?: number, roundTo?: number }} cfg
