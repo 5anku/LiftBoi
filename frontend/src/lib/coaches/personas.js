@@ -14,7 +14,7 @@ export const COACH_PERSONAS = {
   mentzer: { name: 'Mentzer', tagline: 'One set. True failure. That’s the whole program.', color: 'var(--red)' },
   nippard: { name: 'Nippard', tagline: 'RPE over ego — autoregulate and trust the number.', color: 'var(--blue)' },
   wood: { name: 'Guardrail', tagline: 'Steady gains. A hard ceiling on every jump.', color: 'var(--orange)' },
-  sanku: { name: 'Sanku', tagline: 'Train by feel — earn the backoff, don’t force it.', color: 'var(--shadow)' }
+  sanku: { name: 'Sanku', tagline: 'What’s the worst that happens? You fail. So go for it.', color: 'var(--shadow)' }
 }
 
 // public/ is served at the site root, so this is the same path in dev and in the built app —
