@@ -3,7 +3,7 @@ import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
 import { EXDB, EXIDX, BODYPARTS, isCardio, isBodyweightEq, allExercises, equipmentOf, smOf, matchExercise, exOr } from './lib/exercises.js'
 import { activeProfile, exAvailable, ALL_EQUIPMENT, newProfile } from './lib/equipment.js'
-import { fmtDate, fmtNum, fmtVol, fmtDur, durPart, todayISO, isoOf, uid, exCount, DAYN, DAYS, weekOrder, weekStartOf, weekDayOffset, MONTHS_LONG, ACCENTS } from './lib/format.js'
+import { fmtDate, fmtNum, fmtVol, fmtDur, durPart, todayISO, isoOf, addDays, uid, exCount, DAYN, DAYS, weekOrder, weekStartOf, weekDayOffset, MONTHS_LONG, ACCENTS } from './lib/format.js'
 import { lastEntryFor, bestWeightFor, bestWeightForEntry, buildSets, effectiveRoutineId, workoutVolume, setsDone, setsDoneActive, lastBW, supersetUnits, unitOf, setLabel, defaultConfig, cleanupSg, modeOf, effortOf, EFFORT, capEffort, stepEffort, isBw, isPerSide, sideReps, workSetsDone, applyIntensifierPlan, MAX_PLANNED_WARMUPS, NOTE_MAX } from './lib/history.js'
 import { usesBar, barWeightFor, defaultBarWeight, hasBarOverride } from './lib/bar.js'
 import { toScale, rirOf, EFFORT_PRESETS, effortColor } from './lib/effort.js'
@@ -1602,14 +1602,37 @@ function DayOverride({ iso, close }) {
   const weeklyR = st.routines.find(r => r.id === st.week[wd])
   const hasOvr = st.dayPlan[iso] !== undefined
   const effId = effectiveRoutineId(st, iso)
+  const effRoutine = st.routines.find(r => r.id === effId)
+  const loggedThatDay = st.workouts.some(w => w.d === iso)
   const set = v => {
     update(s => { if (!v) delete s.dayPlan[iso]; else s.dayPlan[iso] = v })
     close()
     toast(v === '' ? t('Back to weekly plan') : v === 'rest' ? t('{0} set to rest', fmtDate(iso)) : t('{0} planned for {1}', (st.routines.find(r => r.id === v) || {}).name, fmtDate(iso)))
   }
+  // "Not getting to this today" — move the whole slot one day later instead of losing it: this
+  // day becomes rest, the next one gets whatever was planned here. Asks first if the next day
+  // already has its own plan, since this would otherwise silently overwrite it.
+  const pushToTomorrow = () => {
+    const nextIso = addDays(iso, 1)
+    const doPush = () => {
+      update(s => { s.dayPlan[iso] = 'rest'; s.dayPlan[nextIso] = effId })
+      close()
+      toast(t('{0} pushed to {1}', effRoutine.name, fmtDate(nextIso)))
+    }
+    const nextEffId = effectiveRoutineId(st, nextIso)
+    if (nextEffId && nextEffId !== effId) {
+      confirmSheet({
+        title: t('Push to {0}?', fmtDate(nextIso)),
+        message: t('{0} is already planned for {1} — this replaces it, and {2} becomes a rest day.', st.routines.find(r => r.id === nextEffId)?.name, fmtDate(nextIso), fmtDate(iso)),
+        confirmText: t('Push it'),
+        onConfirm: doPush
+      })
+    } else doPush()
+  }
   return <>
     <h3>{fmtDate(iso, true)}</h3>
     <div className="muted small" style={{ marginBottom: 12 }}>{t('Weekly plan:')} {weeklyR ? weeklyR.name : t('Rest')}{hasOvr && <span style={{ color: 'var(--orange)' }}> · {t('changed for this day')}</span>}<br />{t('Sick, missed a day or want a different session? Pick what to train instead.')}</div>
+    {effRoutine && !loggedThatDay && <Button icon="chevronRight" variant="tinted" onClick={pushToTomorrow} style={{ marginBottom: 12 }}>{t('Push {0} to tomorrow', effRoutine.name)}</Button>}
     <div className="list">
       {st.routines.map(r => <div key={r.id} className="item" {...tappable(() => set(r.id))}>
         <span className="lrow-i"><Icon name={glyphOf(r.emoji)} /></span>
