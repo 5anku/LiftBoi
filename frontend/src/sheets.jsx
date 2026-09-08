@@ -697,11 +697,25 @@ function OneRM({ ex }) {
   const [w, setW] = useState(best ? best.w : (st.exWeights[ex.id] || {}).w || 20)
   const [r, setR] = useState(best ? best.r : 5)
   const est = estimate1RM(w, r)
+  // Someone with real history predating this app can tell it what they already lift, so their
+  // first logged set of a new-to-the-app exercise doesn't get called a fake PR (lib/onerm.js's
+  // best1RM merges this in as a floor, never overriding a heavier logged set).
+  const setPrior = () => {
+    update(s => { s.priorPRs[ex.id] = { w, r } })
+    toast(t('Saved as your PR — {0} × {1}', fmtNum(w) + ' ' + st.unit, r))
+  }
+  const clearPrior = () => {
+    update(s => { delete s.priorPRs[ex.id] })
+    toast(t('Cleared'))
+  }
   return <>
     <h4 className="sec">{t('Estimated 1RM')}</h4>
     {best && <div className="small" style={{ marginBottom: 8 }}>
-      {t('From your log:')} <b className="accent">{fmtNum(best.est)} {st.unit}</b>
-      <span className="dim"> · {t('{0} × {1} on {2}', fmtNum(best.w) + ' ' + st.unit, best.r, fmtDate(best.d, true))}</span>
+      {best.seeded ? t('Your PR (set by you):') : t('From your log:')} <b className="accent">{fmtNum(best.est)} {st.unit}</b>
+      {best.seeded
+        ? <span className="dim"> · {t('{0} × {1}', fmtNum(best.w) + ' ' + st.unit, best.r)}</span>
+        : <span className="dim"> · {t('{0} × {1} on {2}', fmtNum(best.w) + ' ' + st.unit, best.r, fmtDate(best.d, true))}</span>}
+      {best.seeded && <button className="small accent" style={{ marginLeft: 6, background: 'none', border: 0, padding: 0, textDecoration: 'underline' }} onClick={clearPrior}>{t('Clear')}</button>}
     </div>}
     <div className="row cfgrow" style={{ marginBottom: 10 }}>
       <Stepper label={t('Weight ({0})', st.unit)} value={w} step={2.5} onChange={setW} />
@@ -711,9 +725,12 @@ function OneRM({ ex }) {
       <span className="muted small">{t('Estimate')}</span>
       <b className="accent" style={{ fontSize: 20 }}>{est === null ? '—' : fmtNum(est) + ' ' + st.unit}</b>
     </div>
-    <div className="small dim">{est === null
+    <div className="small dim" style={{ marginBottom: est === null ? 0 : 10 }}>{est === null
       ? t('Enter a weight and 1–{0} reps — beyond that an estimate is guesswork.', REP_CAP)
       : t('Epley formula — a calculation from one set, not a tested max.')}</div>
+    {est !== null && <Button size="sm" variant="tinted" icon="trophy" onClick={setPrior}>
+      {t('Already lift this? Save it as your PR')}
+    </Button>}
   </>
 }
 

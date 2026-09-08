@@ -67,9 +67,19 @@ export function e1rmSeries(S, exId, formula = DEFAULT_FORMULA) {
 
 // All-time best estimate for an exercise, with the set and date it came from — the source
 // matters, because "142.5 kg est. from 100×10" is a very different claim from "from 140×1".
+//
+// S.priorPRs (issue: PR seeding) lets a lifter with real history predating this app tell it
+// what they already do, so their first logged set of a lift doesn't read as a brand new record
+// just because the app has never seen the lift before. It only ever raises the bar: a seed
+// lighter than something already logged is simply outclassed and never shown.
 export function best1RM(S, exId, formula = DEFAULT_FORMULA) {
   let best = null
   e1rmSeries(S, exId, formula).forEach(p => { if (!best || p.y > best.est) best = { est: p.y, w: p.w, r: p.r, d: p.d, t: p.t } })
+  const seed = S.priorPRs?.[exId]
+  if (seed) {
+    const est = estimate1RM(seed.w, seed.r, formula)
+    if (est !== null && (!best || est > best.est)) best = { est, w: seed.w, r: seed.r, d: null, t: 0, seeded: true }
+  }
   return best
 }
 

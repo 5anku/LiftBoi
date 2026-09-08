@@ -147,6 +147,39 @@ describe('is1RMRecord', () => {
   })
 })
 
+describe('priorPRs (a lifter seeding a lift the app has never logged)', () => {
+  it('a seeded PR stands in for logged history when there is none', () => {
+    const st = { workouts: [], priorPRs: { deadlift: { w: 180, r: 3 } } }
+    const best = best1RM(st, 'deadlift')
+    expect(best.est).toBe(198)
+    expect(best.seeded).toBe(true)
+  })
+
+  it('so the first-ever logged set no longer reads as a fake record', () => {
+    const st = { workouts: [], priorPRs: { deadlift: { w: 180, r: 3 } } }
+    // A first-ever 100x5 (est. 116.7) would be `prev: 0` / a "record" with no seed at all —
+    // exactly the bug this feature exists to fix.
+    expect(is1RMRecord(st, 'deadlift', { id: 'deadlift', sets: [{ w: 100, r: 5, done: true }] })).toBeNull()
+  })
+
+  it('a seed lighter than real logged history is simply outclassed', () => {
+    const st = { workouts: S.workouts, priorPRs: { bench: { w: 50, r: 5 } } }
+    expect(best1RM(st, 'bench')).toEqual({ est: 105, w: 90, r: 5, d: '2026-01-15', t: 3 })
+  })
+
+  it('a seed heavier than real logged history still wins, and is flagged as seeded', () => {
+    const st = { workouts: S.workouts, priorPRs: { bench: { w: 150, r: 1 } } }
+    const best = best1RM(st, 'bench')
+    expect(best.est).toBe(150)
+    expect(best.seeded).toBe(true)
+  })
+
+  it('an invalid seed (0 weight, too many reps) is ignored rather than crashing', () => {
+    expect(best1RM({ workouts: [], priorPRs: { x: { w: 0, r: 5 } } }, 'x')).toBeNull()
+    expect(best1RM({ workouts: [], priorPRs: { x: { w: 100, r: 99 } } }, 'x')).toBeNull()
+  })
+})
+
 
 describe('drop-sets, rest-pause sets and 1RM', () => {
   it('estimates only from the main/activation weight×reps, ignoring lighter drops', () => {

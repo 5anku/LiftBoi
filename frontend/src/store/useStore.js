@@ -39,6 +39,10 @@ export const DEF = {
   // Favourite exercise ids (issue #6) — sorted to the top of the picker/Library. Personal, so
   // it syncs with the profile but is never part of a shared plan bundle (lib/favourites.js).
   favEx: [],
+  // A lifter's own known best per exercise ({ w, r }), keyed by exercise id — so someone who
+  // already deadlifts 180kg doesn't have the app call their first logged 100kg set a new PR
+  // just because it's never seen the lift before (lib/onerm.js's best1RM merges this in).
+  priorPRs: {},
   // First day of the week as a getDay() index — 1 Monday, 0 Sunday. Monday is the default so
   // every profile written before this setting existed keeps the week it has been looking at.
   // See lib/format.js: nothing reads this field directly, everything goes through the helpers.
