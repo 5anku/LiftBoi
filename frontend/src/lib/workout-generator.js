@@ -31,6 +31,8 @@ const ACCESSORY_POOL = {
   '0739': ['0586', '0585', '1460', '0605', '1371']
 }
 
+// 'pr' is deliberately excluded from this pool — a max-effort attempt should never be the
+// outcome of "surprise me", only a choice you made on purpose.
 const STYLES = ['auto', 'failure', 'volume']
 
 const round25 = w => Math.round(w / 2.5) * 2.5
@@ -57,6 +59,15 @@ function mainSets(style, e1rm, rng) {
   if (style === 'failure') {
     return [{ sets: 1, reps: between(6, 10, rng), weight: w(0.85), note: base.note + 'One set to true failure — Mentzer' }]
   }
+  if (style === 'pr') {
+    // The estimate is a jumping-off point, not the ceiling — Epley from submaximal work reads
+    // close but not exact. A real ramp of warm-up singles beyond this weight is how you find
+    // out where today's actual max sits, same as any peaking block (Program 9's own approach).
+    return [{
+      sets: 1, reps: 1, weight: w(1), warmupSets: 3,
+      note: e1rm ? 'PR attempt · work up in singles past this weight as it feels good' : 'Log baseline — PR attempt'
+    }]
+  }
   // volume
   return [{ sets: between(3, 5, rng), reps: between(8, 12, rng), weight: w(0.7), note: base.note + 'RP volume · straight sets' }]
 }
@@ -65,7 +76,7 @@ const FOCUS_NAME = {
   bench: 'Bench', squat: 'Squat', deadlift: 'Deadlift', ohp: 'Overhead Press',
   push: 'Push', pull: 'Pull', legs: 'Legs'
 }
-const STYLE_LABEL = { auto: 'Autoregulated', failure: 'To Failure', volume: 'Volume' }
+const STYLE_LABEL = { auto: 'Autoregulated', failure: 'To Failure', volume: 'Volume', pr: 'PR Attempt' }
 
 /**
  * Builds a one-off routine-shaped object: { name, ex: [{id, sets, reps, weight, note, prog}] }.
@@ -75,7 +86,7 @@ const STYLE_LABEL = { auto: 'Autoregulated', failure: 'To Failure', volume: 'Vol
  *
  * @param {object} S - app state (for best1RM lookups)
  * @param {{focus: string, style?: string}} opts - focus: bench|squat|deadlift|ohp|push|pull|legs|surprise
- *   style: auto|failure|volume|surprise (default surprise)
+ *   style: auto|failure|volume|pr|surprise (default surprise)
  * @param {function} rng - injectable for deterministic tests; defaults to Math.random
  */
 export function generateWorkout(S, { focus, style = 'surprise' }, rng = Math.random) {
@@ -86,8 +97,11 @@ export function generateWorkout(S, { focus, style = 'surprise' }, rng = Math.ran
   const e1rm = best1RM(S, mainId)?.est || null
   const main = mainSets(resolvedStyle, e1rm, rng).map(s => ({ id: mainId, prog: 'off', ...s }))
 
+  // A max attempt wants fresh legs and a fresh CNS, not a pump — light accessory work at most,
+  // never the 2-4 exercises a normal accessory block gets.
+  const accessoryCount = resolvedStyle === 'pr' ? between(0, 1, rng) : between(2, 4, rng)
   const pool = (ACCESSORY_POOL[mainId] || []).filter(id => id !== mainId)
-  const accessories = pickN(pool, between(2, 4, rng), rng).map(id => ({
+  const accessories = pickN(pool, accessoryCount, rng).map(id => ({
     id, prog: 'off', sets: between(2, 4, rng), reps: between(8, 15, rng), weight: 0,
     note: 'Accessory · RPE 8-9'
   }))
@@ -110,5 +124,6 @@ export const GENERATOR_STYLE_OPTIONS = [
   { value: 'auto', label: 'Autoregulated', sub: 'Top set + back-off, RPE-driven (Nippard)' },
   { value: 'failure', label: 'To failure', sub: 'One hard set, no filler (Mentzer)' },
   { value: 'volume', label: 'Build volume', sub: 'Straight sets, climb toward more (RP)' },
+  { value: 'pr', label: 'PR attempt', sub: 'One all-out single, minimal accessories' },
   { value: 'surprise', label: 'Surprise me', sub: 'Pick a philosophy at random' }
 ]

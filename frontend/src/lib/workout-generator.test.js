@@ -85,6 +85,31 @@ describe('generateWorkout', () => {
     for (const s of seenNotes) expect(['auto', 'failure', 'volume']).toContain(s)
   })
 
+  it('"surprise" never rolls a PR attempt — that has to be chosen on purpose', () => {
+    for (let seed = 0; seed < 60; seed++) {
+      const w = generateWorkout(emptyS, { focus: 'bench', style: 'surprise' }, seeded(seed))
+      expect(w.about).not.toMatch(/PR Attempt/)
+    }
+  })
+
+  it('"pr" style is one all-out single at the estimated 1RM, with a warm-up ramp', () => {
+    const S = { unit: 'kg', workouts: [{ start: 1, d: '2024-01-01', entries: [{ id: '0043', sets: [{ done: true, w: 100, r: 5 }] }] }] }
+    const w = generateWorkout(S, { focus: 'squat', style: 'pr' }, seeded(9))
+    const mainSets = w.ex.filter(e => e.id === '0043')
+    expect(mainSets).toHaveLength(1)
+    expect(mainSets[0]).toMatchObject({ sets: 1, reps: 1, warmupSets: 3 })
+    expect(mainSets[0].weight).toBeGreaterThan(0)
+    expect(mainSets[0].note).toMatch(/PR attempt/i)
+  })
+
+  it('"pr" style keeps accessories minimal (0-1), unlike a normal 2-4 accessory block', () => {
+    for (let seed = 0; seed < 20; seed++) {
+      const w = generateWorkout(emptyS, { focus: 'deadlift', style: 'pr' }, seeded(seed))
+      const accessories = w.ex.filter(e => e.note.includes('Accessory'))
+      expect(accessories.length).toBeLessThanOrEqual(1)
+    }
+  })
+
   it('picks 2-4 accessories, none of them the main lift, all real exercises', () => {
     const w = generateWorkout(emptyS, { focus: 'squat', style: 'auto' }, seeded(6))
     const accessories = w.ex.filter(e => e.note.includes('Accessory'))
