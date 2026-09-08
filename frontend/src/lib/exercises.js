@@ -1,8 +1,13 @@
-import { EXDB } from './exercises-data.js'
+import { EXDB as EXDB_BASE } from './exercises-data.js'
+import { EXDB_FED } from './exercises-data-fed.js'
 import { USER_EXERCISE_MUSCLE_OVERRIDES, exerciseMuscleMetadataFor } from './exercise-muscle-batch-1.js'
 import { t, getVersion, exerciseNameSearchText } from './i18n-core.js'
 
-export { EXDB }
+// Two sources, concatenated rather than merged into one file: exercises-data.js stays the
+// pristine hasaneyldrm/exercises-dataset export, and exercises-data-fed.js (free-exercise-db,
+// Unlicense/public domain — see NOTICE.md) is additive on top. Neither file needs touching to
+// add or refresh the other.
+export const EXDB = [...EXDB_BASE, ...EXDB_FED]
 
 // The generated dataset remains the compatibility/raw export. The runtime catalogue applies
 // owner-approved muscle metadata as a narrow overlay, so imports and historical tests that rely

@@ -2,15 +2,19 @@ name: liftboi
 
 services:
   # One-time: download the exercise images + GIFs into ./media (skipped if already there).
-  # ~140 MB, from github.com/hasaneyldrm/exercises-dataset. That dataset is MIT for the
-  # metadata and instruction text, but the images and GIFs are © Gym visual
-  # (https://gymvisual.com/) and are used under the dataset's terms — LiftBoi neither
-  # redistributes nor relicenses them. See NOTICE.md.
+  # Two sources, two licenses:
+  #  - ~140 MB from github.com/hasaneyldrm/exercises-dataset. MIT for the metadata and
+  #    instruction text, but the images and GIFs are © Gym visual (https://gymvisual.com/)
+  #    and are used under the dataset's terms — LiftBoi neither redistributes nor relicenses
+  #    them. See NOTICE.md.
+  #  - ~50 MB from github.com/yuhonas/free-exercise-db. Unlicense (public domain), backing
+  #    the fe#### ids added on top in exercises-data-fed.js.
   media:
     image: alpine/git
     volumes:
       - ./media/img:/out/img
       - ./media/gif:/out/gif
+      - ./scripts/fed-image-manifest.tsv:/fed-image-manifest.tsv:ro
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
@@ -26,6 +30,12 @@ services:
           echo "  from Gym visual. Details in NOTICE.md."
           git clone --depth 1 https://github.com/hasaneyldrm/exercises-dataset /tmp/ds
           cp /tmp/ds/images/*.jpg /out/img/ && cp /tmp/ds/videos/*.gif /out/gif/
+          echo "↓ Downloading additional exercise images (~50 MB) from"
+          echo "  github.com/yuhonas/free-exercise-db — Unlicense (public domain)."
+          git clone --depth 1 https://github.com/yuhonas/free-exercise-db /tmp/fed
+          while IFS="$$(printf '\t')" read -r id src; do
+            cp "/tmp/fed/exercises/$$src" "/out/img/$$id.jpg"
+          done < /fed-image-manifest.tsv
           echo "✓ Exercise media ready ($$(ls /out/img | wc -l) images)."
         else
           echo "✓ Exercise media already present — skipping download."

@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # Manually download the exercise images (JPG) and animations (GIF) into ./media.
 # You normally DON'T need this — `docker compose up` fetches them automatically.
-# Source: hasaneyldrm/exercises-dataset — MIT for the metadata and instruction text, but the
-# images and GIFs are © Gym visual (https://gymvisual.com/), used under that dataset's terms.
-# LiftBoi does not redistribute or relicense them. See NOTICE.md.
+# Two sources, two licenses:
+#  - hasaneyldrm/exercises-dataset — MIT for the metadata and instruction text, but the
+#    images and GIFs are © Gym visual (https://gymvisual.com/), used under that dataset's
+#    terms. LiftBoi does not redistribute or relicense them. See NOTICE.md.
+#  - yuhonas/free-exercise-db — Unlicense (public domain), images included. Backs the
+#    fe#### exercise ids added on top of the base dataset (exercises-data-fed.js).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 tmp="$(mktemp -d)"
@@ -21,4 +24,13 @@ git clone --depth 1 https://github.com/hasaneyldrm/exercises-dataset "$tmp"
 mkdir -p media/img media/gif
 cp "$tmp"/images/*.jpg media/img/
 cp "$tmp"/videos/*.gif media/gif/
+
+echo "↓ Downloading additional exercise images (~50 MB) from github.com/yuhonas/free-exercise-db"
+echo "  Unlicense (public domain) — see NOTICE.md."
+fedtmp="$(mktemp -d)"
+git clone --depth 1 https://github.com/yuhonas/free-exercise-db "$fedtmp"
+while IFS="$(printf '\t')" read -r id src; do
+  cp "$fedtmp/exercises/$src" "media/img/$id.jpg"
+done < scripts/fed-image-manifest.tsv
+
 echo "✓ $(ls media/img | wc -l) images, $(ls media/gif | wc -l) GIFs"

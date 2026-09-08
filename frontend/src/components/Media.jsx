@@ -12,7 +12,9 @@ import Icon from './Icon.jsx'
 // (gifSize 'off') — then nothing renders here and the exercise card closes up, exactly like
 // a custom exercise without media. Any other/legacy value behaves as 'full'.
 export default function Media({ ex, id, compact, minimizable }) {
-  const [playing, setPlaying] = useState(true)
+  // A source with no animation (e.g. free-exercise-db's static photos) has nothing to play —
+  // start on the still image rather than attempting a gif URL that was never going to exist.
+  const [playing, setPlaying] = useState(!!ex.gif)
   // 'gif' → the animation failed, the still is showing; 'all' → the still failed too. Media is
   // fetched from wherever the build points (a mount, a CDN): a dropped connection, an expired
   // session on a gated instance or a CDN hiccup used to leave the browser's broken-image glyph
@@ -21,13 +23,14 @@ export default function Media({ ex, id, compact, minimizable }) {
   const [failed, setFailed] = useState(null)
   const gifSize = useStore(s => s.S.gifSize)
   const update = useStore(s => s.update)
-  if (!ex.gif) return null
+  if (!ex.gif && !ex.img) return null
   if (minimizable && gifSize === 'off') return null
   const mini = minimizable && gifSize === 'mini'
   const toggleSize = e => { e.stopPropagation(); update(s => { s.gifSize = mini ? 'full' : 'mini' }) }
-  const showGif = playing && failed == null
+  const showGif = !!ex.gif && playing && failed == null
   const onError = () => setFailed(showGif ? 'gif' : 'all')
   const onTap = () => {
+    if (!ex.gif) return
     if (failed) { setFailed(null); setPlaying(true); return }
     setPlaying(p => !p)
   }
@@ -41,7 +44,7 @@ export default function Media({ ex, id, compact, minimizable }) {
           <Icon name={mini ? 'expand' : 'minimize'} />{mini ? t('Expand') : t('Minimize')}
         </button>
       )}
-      {!mini && !failed && (
+      {!mini && !failed && ex.gif && (
         <span className="gifhint">
           <Icon name={playing ? 'pause' : 'play'} />{playing ? t('tap to pause') : t('tap to play')}
         </span>

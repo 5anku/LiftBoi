@@ -22,7 +22,7 @@
 <link rel="stylesheet" href="styles.css?v=16">
 <script>document.documentElement.className += ' js'</script>
 <script type="application/ld+json">
-{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is LiftBoi really free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes — free as in cost and as in freedom (AGPL-3.0). No pro tier, no locked features, no ads, and the license keeps every fork open source too."}}, {"@type": "Question", "name": "Why isn't LiftBoi on the Play Store or App Store?", "acceptedAnswer": {"@type": "Answer", "text": "By choice (and on iOS, by Apple's rules for sideloading). Store accounts cost money, impose terms that sit badly with the AGPL, and put a gatekeeper between you and an app whose whole point is that your data is yours. The signed Android APK is a direct download."}}, {"@type": "Question", "name": "Should I pick the mobile app or self-host?", "acceptedAnswer": {"@type": "Answer", "text": "To simply track your training: the mobile app. For data on your own hardware, synced across devices, with profiles for the people you train with: self-host with Docker. The backup file migrates everything between the two, or pair the app to your server."}}, {"@type": "Question", "name": "What's on the LiftBoi roadmap?", "acceptedAnswer": {"@type": "Answer", "text": "Percentage/training-max programming (5/3/1-style), more starter plans, body measurements alongside weight, per-exercise notes and a plate calculator, more instruction languages. Community-driven — ideas and merge requests welcome."}}, {"@type": "Question", "name": "Where does the exercise database come from?", "acceptedAnswer": {"@type": "Answer", "text": "From hasaneyldrm/exercises-dataset: 1,324 exercises with animations and instructions. The metadata and instruction text are MIT; the images and animations are third-party media that LiftBoi never redistributes — your instance downloads them from upstream on first run."}}, {"@type": "Question", "name": "What does the AGPL license mean for me?", "acceptedAnswer": {"@type": "Answer", "text": "You can self-host, use, modify and share LiftBoi freely. Only if you run a modified version as a network service must you offer that version's source under the same license. Using or self-hosting it unmodified obliges you to nothing."}}]}
+{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is LiftBoi really free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes — free as in cost and as in freedom (AGPL-3.0). No pro tier, no locked features, no ads, and the license keeps every fork open source too."}}, {"@type": "Question", "name": "Why isn't LiftBoi on the Play Store or App Store?", "acceptedAnswer": {"@type": "Answer", "text": "By choice (and on iOS, by Apple's rules for sideloading). Store accounts cost money, impose terms that sit badly with the AGPL, and put a gatekeeper between you and an app whose whole point is that your data is yours. The signed Android APK is a direct download."}}, {"@type": "Question", "name": "Should I pick the mobile app or self-host?", "acceptedAnswer": {"@type": "Answer", "text": "To simply track your training: the mobile app. For data on your own hardware, synced across devices, with profiles for the people you train with: self-host with Docker. The backup file migrates everything between the two, or pair the app to your server."}}, {"@type": "Question", "name": "What's on the LiftBoi roadmap?", "acceptedAnswer": {"@type": "Answer", "text": "Percentage/training-max programming (5/3/1-style), more starter plans, body measurements alongside weight, per-exercise notes and a plate calculator, more instruction languages. Community-driven — ideas and merge requests welcome."}}, {"@type": "Question", "name": "Where does the exercise database come from?", "acceptedAnswer": {"@type": "Answer", "text": "Two sources. hasaneyldrm/exercises-dataset: 1,324 exercises with animations and instructions (metadata/text MIT; images and animations are third-party media LiftBoi never redistributes, downloaded from upstream on first run). Plus 756 more from yuhonas/free-exercise-db, genuinely public domain (Unlicense), committed straight into the repo."}}, {"@type": "Question", "name": "What does the AGPL license mean for me?", "acceptedAnswer": {"@type": "Answer", "text": "You can self-host, use, modify and share LiftBoi freely. Only if you run a modified version as a network service must you offer that version's source under the same license. Using or self-hosting it unmodified obliges you to nothing."}}]}
 </script>
 </head>
 <body class="topnav">
@@ -270,9 +270,10 @@
 
   <h3 id="f-plan">Routines &amp; the plan builder</h3>
   <ul>
-    <li><b>1,324 exercises</b> — searchable, with animated demonstrations and step-by-step
-        instructions, plus a <b>filter for the equipment you actually own</b> (the filter
-        options adapt to what you've picked, so every combination on screen has results).</li>
+    <li><b>2,080 exercises</b> — searchable, most with animated demonstrations and the rest
+        with photos, all with step-by-step instructions, plus a <b>filter for the equipment
+        you actually own</b> (the filter options adapt to what you've picked, so every
+        combination on screen has results).</li>
     <li><b>Your own exercises:</b> a name and a body part is enough; they behave like built-in
         ones everywhere, with an optional description instead of an animation.</li>
     <li><b>Supersets:</b> plan them into a routine, or pair two exercises <i>mid-session</i>
@@ -790,12 +791,15 @@ Leg Day,Leg Press,2026-08-21,200,1</code></pre>
      container images on every push to <code>main</code> or published release. The Android
      APK is a manual build for now — <code>cd frontend && npm run build:mobile && npx cap
      open android</code> — there's no CI pipeline signing and publishing it yet.</p>
-  <p>The exercise database comes from
+  <p>The exercise database comes from two sources. The base library is
      <a href="https://github.com/hasaneyldrm/exercises-dataset" rel="noopener">hasaneyldrm/exercises-dataset</a>:
      1,324 exercises with animations and instructions. The metadata and instruction text are
      MIT; the images and animations are third-party media that LiftBoi never redistributes —
      your instance downloads them from upstream on first run (see the
-     <a href="#faq">FAQ</a> for the licensing details).</p>
+     <a href="#faq">FAQ</a> for the licensing details). A further 756 exercises come from
+     <a href="https://github.com/yuhonas/free-exercise-db" rel="noopener">yuhonas/free-exercise-db</a>,
+     genuinely public domain (Unlicense) — metadata and photos both, committed straight into
+     the repo.</p>
 
   <h2 id="build">Build it yourself</h2>
   <p>Everything on this page is built from the public repo:</p>
@@ -895,7 +899,7 @@ Leg Day,Leg Press,2026-08-21,200,1</code></pre>
      requests welcome — the up-to-date list is in the
      <a href="https://github.com/5anku/LiftBoi#roadmap" rel="noopener">README</a>.</p>
   <h3>Where does the exercise database come from?</h3>
-  <p>From <a href="https://github.com/hasaneyldrm/exercises-dataset" rel="noopener">hasaneyldrm/exercises-dataset</a>:
+  <p>Two sources. The base library is <a href="https://github.com/hasaneyldrm/exercises-dataset" rel="noopener">hasaneyldrm/exercises-dataset</a>:
      1,324 exercises with animations and instructions, localized in 12 of LiftBoi's 14 UI
      languages — including LiftBoi's separately curated Brazilian Portuguese translation.
      That dataset licenses the two halves differently, and so does LiftBoi: the exercise
@@ -904,10 +908,14 @@ Leg Day,Leg Press,2026-08-21,200,1</code></pre>
      ownership is currently disputed between
      <a href="https://gymvisual.com/" rel="noopener">Gym visual</a> and ExerciseDB, and a
      clarification has been requested.</p>
-  <p>LiftBoi does not redistribute that media — your instance downloads it from the upstream
-     source on first run. If you want to reuse it yourself, commercially or otherwise, clear
-     it with the rights holder first. Full third-party notices, including the body-diagram
-     geometry, are in
+  <p>On top of that, 756 more exercises come from
+     <a href="https://github.com/yuhonas/free-exercise-db" rel="noopener">yuhonas/free-exercise-db</a>
+     — genuinely public domain (<b>Unlicense</b>), metadata and photos both, so those are
+     committed straight into the LiftBoi repo rather than downloaded at runtime.</p>
+  <p>LiftBoi does not redistribute the first source's media — your instance downloads it from
+     the upstream source on first run. If you want to reuse it yourself, commercially or
+     otherwise, clear it with the rights holder first. Full third-party notices, including the
+     body-diagram geometry, are in
      <a href="https://github.com/5anku/LiftBoi/blob/main/NOTICE.md" rel="noopener">NOTICE.md</a>.</p>
   <h3>What does the AGPL mean for me?</h3>
   <p>You can self-host, use, modify and share LiftBoi freely. If you run a <i>modified</i>

@@ -72,3 +72,30 @@ describe('Media gifSize', () => {
     expect(host.querySelector('.exmedia.mini')).toBeFalsy()
   })
 })
+
+// A source with only a still (e.g. Free Exercise DB) has no animation to play — the old code
+// gated the whole component on `ex.gif` and rendered nothing at all for these (issue: exercise
+// library expansion).
+describe('Media with a static-only exercise (no gif)', () => {
+  const STILL_EX = { id: 'stretch', n: 'hip stretch', img: 'stretch.jpg' }
+  const mountStill = props => act(() => root.render(<Media ex={STILL_EX} {...props} />))
+
+  it('shows the still image instead of rendering nothing', () => {
+    mountStill({})
+    const img = host.querySelector('.exmedia img')
+    expect(img).toBeTruthy()
+    expect(img.src).toContain('stretch.jpg')
+  })
+
+  it('renders nothing only when there is neither a gif nor an image', () => {
+    act(() => root.render(<Media ex={{ id: 'custom', n: 'my exercise' }} />))
+    expect(host.innerHTML).toBe('')
+  })
+
+  it('drops the play/pause hint and tap-to-toggle since there is nothing to animate', () => {
+    mountStill({})
+    expect(host.querySelector('.gifhint')).toBeFalsy()
+    act(() => { host.querySelector('.exmedia').dispatchEvent(new Event('click', { bubbles: true })) })
+    expect(host.querySelector('.exmedia img').src).toContain('stretch.jpg') // unchanged
+  })
+})

@@ -117,6 +117,29 @@ runtime.
 If you want to reuse the media — in openGym or anywhere else, commercially or not — **clear it with
 the rights holder first**, and keep any attribution that accompanies it intact.
 
+### Additional exercises & images — Free Exercise DB, Unlicense (public domain)
+
+`frontend/src/lib/exercises-data-fed.js` (the `fe####` exercise ids) is sourced from
+[**yuhonas/free-exercise-db**](https://github.com/yuhonas/free-exercise-db), released under the
+**Unlicense** — genuinely public domain, unlike the dataset above. Both the exercise metadata
+(names, muscles, instructions) and the images are covered; LiftBoi commits the metadata directly
+and downloads the images the same way as the dataset above (`docker compose up`, or
+`scripts/fetch-media.sh`), via the file list in `scripts/fed-image-manifest.tsv`.
+
+```
+This is free and unencumbered software released into the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
+software, either in source code form or as a compiled binary, for any purpose,
+commercial or non-commercial, and by any means.
+```
+
+Known gap: the mobile build's CDN image base (`VITE_IMG_BASE`, jsDelivr against
+hasaneyldrm/exercises-dataset) does not yet also serve these images — an `fe####` exercise shows
+no picture in the mobile app specifically until that's wired up, though it works normally in the
+self-hosted web app. Falls back gracefully to the same broken-image placeholder any dropped image
+load already shows.
+
 Brazilian Portuguese exercise instructions under
 `scripts/instruction-sources/pt-BR.json` and exercise names under
 `scripts/exercise-name-sources/pt-BR.json` are original translations of that
