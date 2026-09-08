@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => {
     effortPickerSheet: vi.fn(),
     exerciseHistorySheet: vi.fn(),
     coachPickerSheet: vi.fn(),
+    coachSheet: vi.fn(),
   }
   state.stopRest = vi.fn(() => { state.timer = null })
   state.stopWork = vi.fn(() => { state.work = null })
@@ -80,6 +81,7 @@ vi.mock('../sheets.jsx', () => ({
   effortPickerSheet: mocks.effortPickerSheet,
   exerciseHistorySheet: mocks.exerciseHistorySheet,
   coachPickerSheet: mocks.coachPickerSheet,
+  coachSheet: mocks.coachSheet,
 }))
 vi.mock('../components/Media.jsx', () => ({ default: () => null }))
 // api.js reads navigator.userAgent at module scope. This file installs its own DOM inside the
@@ -573,35 +575,18 @@ describe('Workout discard timer lifecycle', () => {
   })
 })
 
-describe('coach bubble', () => {
-  it('renders one bubble per Suggestion, named for the coach that made it', async () => {
-    await mount([exercise('plain-bench', [false], {
-      coach: [{ lift: 'plain-bench', signal: 'add_weight', severity: 'action', message: '12 reps — add weight.', source_coach: 'mentzer' }],
-    })])
+describe('coach popup', () => {
+  it('pops up a modal with the coach\'s Suggestion, once per distinct message', async () => {
+    const coach = [{ lift: 'plain-bench', signal: 'add_weight', severity: 'action', message: '12 reps — add weight.', source_coach: 'mentzer' }]
+    await mount([exercise('plain-bench', [false], { coach })])
 
-    const bubble = container.querySelector('.coach-bubble')
-    expect(bubble).toBeTruthy()
-    expect(bubble.classList.contains('warn')).toBe(true)
-    expect(bubble.textContent).toContain('Mentzer')
-    expect(bubble.textContent).toContain('12 reps — add weight.')
+    expect(mocks.coachSheet).toHaveBeenCalledTimes(1)
+    expect(mocks.coachSheet).toHaveBeenCalledWith(coach)
   })
 
-  it('falls back to a plain initial avatar when the portrait has no image yet', async () => {
-    await mount([exercise('plain-bench', [false], {
-      coach: [{ lift: 'plain-bench', signal: 'hold', severity: 'info', message: 'On track.', source_coach: 'wood' }],
-    })])
-
-    // jsdom/linkedom never actually loads the <img>, so it never fires onError — the fallback
-    // only appears after that error, which real browsers deliver on every missing file. This
-    // just pins the not-yet-broken shape: an <img> pointed at the right URL, ready to fall back.
-    const img = container.querySelector('.coach-avatar')
-    expect(img.tagName).toBe('IMG')
-    expect(img.getAttribute('src')).toBe('/coaches/wood.png')
-  })
-
-  it('renders nothing when the coach has no opinion', async () => {
+  it('does not pop up when the coach has no opinion', async () => {
     await mount([exercise('plain-bench', [false], { coach: [] })])
-    expect(container.querySelector('.coach-bubble')).toBeNull()
+    expect(mocks.coachSheet).not.toHaveBeenCalled()
   })
 })
 

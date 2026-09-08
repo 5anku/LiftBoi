@@ -14,6 +14,7 @@ import { buildStarterPlan, starterPlanDays, starterPlanOptions } from './lib/sta
 import { generateWorkout, GENERATOR_FOCUS_OPTIONS, GENERATOR_STYLE_OPTIONS } from './lib/workout-generator.js'
 import { recommendPrograms, GOAL_OPTIONS, DAYS_OPTIONS, PHILOSOPHY_OPTIONS } from './lib/program-recommender.js'
 import Media, { Thumb } from './components/Media.jsx'
+import CoachBubble from './components/CoachBubble.jsx'
 import LineChart from './components/LineChart.jsx'
 import Stepper from './components/Stepper.jsx'
 import Icon from './components/Icon.jsx'
@@ -87,6 +88,17 @@ export function menuSheet(opts) {
 export function confirmSheet(opts) {
   ui().openSheet(close => <ConfirmDialog {...opts} close={close} />, { kind: 'center' })
 }
+
+/* ============================ coach popup ============================ */
+// The active program's coach used to sit inline in the exercise card; now it pops up as its
+// own modal so it reads as someone talking to you, not another line of card copy.
+function CoachSheet({ coach, close }) {
+  return <div style={{ textAlign: 'center' }}>
+    {coach.map((s, i) => <CoachBubble key={i} coachId={s.source_coach} message={s.message} severity={s.severity} />)}
+    <Button variant="ghost" className="dim" style={{ marginTop: 14 }} onClick={close}>{t('Got it')}</Button>
+  </div>
+}
+export const coachSheet = coach => ui().openSheet(close => <CoachSheet coach={coach} close={close} />, { kind: 'center' })
 
 /* ============================ starter plan ============================ */
 // Plan names and blurbs live here, not in lib/starter.js: check-source-strings.mjs only finds

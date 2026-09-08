@@ -12,8 +12,7 @@ import { t, exerciseNameFor } from '../lib/i18n.js'
 import { api } from '../lib/api.js'
 import { insertionIndexAfterCurrentUnit, nextUnfinishedUnit, setProgressHighWater, supersetFlowStep, restAfterSet, restOnRecheck, restSecFor } from '../lib/supersetFlow.js'
 import Media from '../components/Media.jsx'
-import CoachBubble from '../components/CoachBubble.jsx'
-import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, finishWorkout, workoutCompleteSheet, confirmSheet, exerciseNoteSheet, sessionNoteSheet, swapActiveWorkoutExercise, barWeightSheet, menuSheet, effortPickerSheet, exerciseHistorySheet, generatorSheet, programRecommenderSheet, coachPickerSheet } from '../sheets.jsx'
+import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, finishWorkout, workoutCompleteSheet, confirmSheet, exerciseNoteSheet, sessionNoteSheet, swapActiveWorkoutExercise, barWeightSheet, menuSheet, effortPickerSheet, exerciseHistorySheet, generatorSheet, programRecommenderSheet, coachPickerSheet, coachSheet } from '../sheets.jsx'
 import { COACH_PERSONAS } from '../lib/coaches/personas.js'
 import { effortColor } from '../lib/effort.js'
 import Icon from '../components/Icon.jsx'
@@ -128,6 +127,16 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
   // Stockfish Coach). Computed once when the session was built, same as `plan` above, so what's
   // shown here always matches the numbers already sitting in the rows.
   const coach = entry.coach || []
+  // Pops up as its own modal rather than sitting inline in the card — once per distinct message
+  // set, so switching sets/tabs and coming back doesn't re-open something already dismissed.
+  const shownCoachSig = useRef(null)
+  useEffect(() => {
+    if (compact || !coach.length) return
+    const sig = coach.map(s => s.source_coach + '|' + s.message).join('\n')
+    if (shownCoachSig.current === sig) return
+    shownCoachSig.current = sig
+    coachSheet(coach)
+  }, [compact, coach])
   // A bodyweight set has no weight to type, so the column is not there (issue #32) — one
   // stepper instead of two, which is the whole point of the flag. Adding a belt weight in the
   // config brings it back, now labelled as the addition it is.
@@ -313,10 +322,6 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
       <Icon name={plan.kind === 'up' ? 'arrowUp' : plan.kind === 'deload' ? 'arrowDown' : 'lightbulb'} />
       <span><strong>{t(guidance.policyLabel)}</strong> · {t(...guidance.why)}</span>
     </button>}
-    {/* One bubble per Suggestion from the active program's coach — plain English, not run
-        through t(): the message is built with numbers already interpolated in, so there's no
-        fixed template a translation could key off (see lib/coaches). */}
-    {coach.map((s, i) => <CoachBubble key={i} coachId={s.source_coach} message={s.message} severity={s.severity} />)}
     <div className="card" style={{ marginTop: 10, marginBottom: 0 }}>
       {/* the header carries the same eff3 sizing as the rows, or the labels drift off their columns */}
       <div className={'sethead' + (col3 ? ' eff3' : '')}><span className="n-sp" /><span className="w-sp">{col1.hd}</span>{col2 && <span className="r-sp">{col2.hd}</span>}{col3 && <span className="eff-sp">{col3.hd}</span>}{timed && <span className="ck-sp" />}<span className="ck-sp" /></div>
