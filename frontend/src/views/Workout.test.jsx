@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => {
     menuSheet: vi.fn(),
     effortPickerSheet: vi.fn(),
     exerciseHistorySheet: vi.fn(),
+    coachPickerSheet: vi.fn(),
   }
   state.stopRest = vi.fn(() => { state.timer = null })
   state.stopWork = vi.fn(() => { state.work = null })
@@ -78,6 +79,7 @@ vi.mock('../sheets.jsx', () => ({
   sessionNoteSheet: vi.fn(),
   effortPickerSheet: mocks.effortPickerSheet,
   exerciseHistorySheet: mocks.exerciseHistorySheet,
+  coachPickerSheet: mocks.coachPickerSheet,
 }))
 vi.mock('../components/Media.jsx', () => ({ default: () => null }))
 // api.js reads navigator.userAgent at module scope. This file installs its own DOM inside the
@@ -600,6 +602,46 @@ describe('coach bubble', () => {
   it('renders nothing when the coach has no opinion', async () => {
     await mount([exercise('plain-bench', [false], { coach: [] })])
     expect(container.querySelector('.coach-bubble')).toBeNull()
+  })
+})
+
+describe('freestyle coach picker', () => {
+  const findButton = label => [...container.querySelectorAll('button')].find(b => b.textContent.trim() === label)
+
+  it('offers a coach picker in freestyle, defaulting to Sanku', async () => {
+    await mount([exercise('plain-bench', [false])]) // no routineId -> freestyle
+    expect(findButton('Coach: Sanku')).toBeTruthy()
+  })
+
+  it('shows the already-picked coach instead of the default', async () => {
+    await mount([exercise('plain-bench', [false])], 0, { active: { coachId: 'mentzer' } })
+    expect(findButton('Coach: Mentzer')).toBeTruthy()
+  })
+
+  it('does not offer a picker for a routine with its own program', async () => {
+    await mount([exercise('plain-bench', [false])], 0, {
+      active: { routineId: 'routine-1' },
+      routines: [{ id: 'routine-1', ex: [] }],
+    })
+    expect(findButton('Coach: Sanku')).toBeFalsy()
+    expect(container.querySelector('button[icon="sparkles"]')).toBeFalsy()
+  })
+
+  it('picking a coach recomputes every already-added exercise\'s coach line', async () => {
+    await mount([exercise('bench-with-history', [false], {
+      target: { mode: 'reps', reps: 8, weight: 100, bodyweight: false },
+    })], 0, {
+      workouts: [{ d: '2024-01-01', entries: [{ id: 'bench-with-history', sets: [{ done: true, r: 12, w: 100 }] }] }],
+    })
+
+    await act(async () => { findButton('Coach: Sanku').dispatchEvent(new dom.Event('click', { bubbles: true })) })
+    const call = mocks.coachPickerSheet.mock.calls.at(-1)
+    expect(call[0]).toBe('sanku')
+    await act(async () => { call[1]('mentzer') })
+
+    expect(mocks.S.active.coachId).toBe('mentzer')
+    expect(mocks.S.active.entries[0].coach[0].source_coach).toBe('mentzer')
+    expect(mocks.S.active.entries[0].coach[0].signal).toBe('add_weight') // 12 reps overshoots Mentzer's 6-10 target
   })
 })
 

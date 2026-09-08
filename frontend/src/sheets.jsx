@@ -22,12 +22,14 @@ import { glyphOf, GLYPH_GROUPS, DEFAULT_GLYPH } from './lib/glyphs.js'
 import BodyMap from './components/BodyMap.jsx'
 import MuscleExplorer from './components/MuscleExplorer.jsx'
 import { exerciseMuscleSnapshot, loadOfWorkouts, MUSCLES, MUSCLE_NAME, FINE_MUSCLES, FINE_MUSCLE_NAME, normalizeMuscleGroups, hasExplicitMuscleMetadata } from './lib/muscles.js'
+import { COACH_PERSONAS } from './lib/coaches/personas.js'
+import { evaluate } from './lib/coaches/index.js'
 import { parseImport, mergeImport } from './lib/import-csv.js'
 import { importHevyData, HevyApiError, HEVY_DEV_SETTINGS, mergeHevyRoutines } from './lib/import-hevy.js'
 import { buildPlanBundle, parsePlan, mergePlan, printPlan } from './lib/plan-share.js'
 import { estimate1RM, best1RM, is1RMRecord, REP_CAP } from './lib/onerm.js'
 import { exerciseHistory } from './lib/exercise-history.js'
-import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLICIES_FOR, POLICY_NAME, POLICY_DESC, MAX_BW_SETS, weightIncrement } from './lib/progression.js'
+import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLICIES_FOR, POLICY_NAME, POLICY_DESC, MAX_BW_SETS, weightIncrement, sessionsFor } from './lib/progression.js'
 import { normalizeRepRange } from './lib/rep-range.js'
 import { MOBILE, shareExport } from './lib/mobile.js'
 import { buildCompletedWorkout } from './lib/finish-workout.js'
@@ -1846,6 +1848,27 @@ function GeneratorChooser({ close }) {
   </>
 }
 export const generatorSheet = () => ui().openSheet(close => <GeneratorChooser close={close} />)
+
+/* ============================ freestyle coach picker ============================ */
+// Sanku is the default for any session without its own coached program (see lib/coaches'
+// evaluate()) — this is where freestyle overrides that, session by session. Only meaningful
+// for freestyle: a routine that came from a real program keeps that program's own coach,
+// no picker needed or offered.
+function CoachPicker({ current, onPick, close }) {
+  const pick = coachId => { onPick(coachId); close() }
+  return <>
+    <h3>{t('Choose your coach')}</h3>
+    <div className="muted small" style={{ marginBottom: 12 }}>{t('Freestyle has no program of its own to pick a coach for you — choose who trains you this session.')}</div>
+    <div className="list">
+      {Object.entries(COACH_PERSONAS).map(([id, persona]) => <div key={id} className="item" {...tappable(() => pick(id))}>
+        <span className="lrow-i" style={{ background: persona.color }}>{persona.name[0]}</span>
+        <div className="grow"><div className="tt">{persona.name}</div><div className="ss">{persona.tagline}</div></div>
+        {current === id && <Icon name="check" className="accent" />}
+      </div>)}
+    </div>
+  </>
+}
+export const coachPickerSheet = (current, onPick) => ui().openSheet(close => <CoachPicker current={current} onPick={onPick} close={close} />)
 
 /* ============================ log a past workout ============================ */
 // The same screen as a live session, pointed at another day. `backfill` on the active

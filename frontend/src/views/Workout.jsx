@@ -13,7 +13,8 @@ import { api } from '../lib/api.js'
 import { insertionIndexAfterCurrentUnit, nextUnfinishedUnit, setProgressHighWater, supersetFlowStep, restAfterSet, restOnRecheck, restSecFor } from '../lib/supersetFlow.js'
 import Media from '../components/Media.jsx'
 import CoachBubble from '../components/CoachBubble.jsx'
-import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, finishWorkout, workoutCompleteSheet, confirmSheet, exerciseNoteSheet, sessionNoteSheet, swapActiveWorkoutExercise, barWeightSheet, menuSheet, effortPickerSheet, exerciseHistorySheet, generatorSheet, programRecommenderSheet } from '../sheets.jsx'
+import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, finishWorkout, workoutCompleteSheet, confirmSheet, exerciseNoteSheet, sessionNoteSheet, swapActiveWorkoutExercise, barWeightSheet, menuSheet, effortPickerSheet, exerciseHistorySheet, generatorSheet, programRecommenderSheet, coachPickerSheet } from '../sheets.jsx'
+import { COACH_PERSONAS } from '../lib/coaches/personas.js'
 import { effortColor } from '../lib/effort.js'
 import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
@@ -502,6 +503,15 @@ function ActiveWorkout() {
       onConfirm: () => mutEntry(idx, e => { e.sets.splice(i + 1, 0, { w: weight, r: reps, done: false }) })
     })
   }
+  // Freestyle only — a routine with its own program keeps that program's coach, not offered
+  // here at all. Recomputes every already-added exercise's coach line immediately, so switching
+  // mid-session doesn't leave stale advice from whoever was training you a moment ago.
+  const changeCoach = coachId => update(s => {
+    s.active.coachId = coachId
+    s.active.entries.forEach(e => {
+      e.coach = evaluate(null, sessionsFor(s, e.id, e.target), e.target, { coachId })
+    })
+  })
   const pairAt = (first, second) => update(s => {
     s.active.entries = pairAdjacent(s.active.entries, first, second)
   })
@@ -627,7 +637,7 @@ function ActiveWorkout() {
         activeEntry.target = { ...cfg }
         activeEntry.plan = plan
         activeEntry.sets = [...doneWarm, ...freshWarm.slice(doneWarm.length), ...doneWork, ...freshWork.slice(doneWork.length)]
-        activeEntry.coach = evaluate(activeRoutine?.programId, sessionsFor(s, activeEntry.id, full), full)
+        activeEntry.coach = evaluate(activeRoutine?.programId, sessionsFor(s, activeEntry.id, full), full, activeRoutine ? {} : { coachId: s.active.coachId })
       })
     }, null, routine)
   }
@@ -884,7 +894,7 @@ function ActiveWorkout() {
         const insertAt = insertionIndexAfterCurrentUnit(supersetUnits(s.active.entries), s.active.cur, s.active.entries.length)
         // Freestyle opts out of automatic progression (no `plan`), but not out of the coach —
         // Sanku's the default for anything without its own coached program, freestyle included.
-        const coach = evaluate(routine?.programId, sessionsFor(s, ex.id, full), full)
+        const coach = evaluate(routine?.programId, sessionsFor(s, ex.id, full), full, freestyle ? { coachId: s.active.coachId } : {})
         s.active.entries.splice(insertAt, 0, { id: ex.id, target: { ...cfg }, plan, sets: applyIntensifierPlan(progressed, full), coach })
         s.active.cur = insertAt
         useUI.getState().shiftRestOwner(insertAt, 1)
@@ -918,6 +928,13 @@ function ActiveWorkout() {
     <div style={{ height: 10 }} />
     {/* Wrapping up is when you know how the session went, so the note sits with the finish
         button rather than somewhere in the header. */}
+    {/* Only freestyle offers a choice — a routine with its own program keeps that program's
+        coach, which isn't swappable mid-session. */}
+    {!A.routineId && <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+      <Button size="sm" icon="sparkles" variant="tinted" onClick={() => coachPickerSheet(A.coachId || 'sanku', changeCoach)}>
+        {t('Coach: {0}', (COACH_PERSONAS[A.coachId] || COACH_PERSONAS.sanku).name)}
+      </Button>
+    </div>}
     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
       <Button size="sm" icon="pencil" variant={A.note ? 'tinted' : undefined} onClick={sessionNoteSheet}>
         {A.note ? t('Edit session note') : t('Add session note')}
