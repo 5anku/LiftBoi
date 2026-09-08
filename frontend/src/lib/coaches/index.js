@@ -11,19 +11,28 @@ import { evaluateSanku } from './sanku.coach.js'
 export const PROGRAM_BY_ID = Object.fromEntries(programsData.programs.map(p => [p.id, p]))
 
 /**
+ * Which coach's voice judges this exercise — a programs.json id resolves to its coach_id,
+ * opts.coachId overrides that (freestyle's own coach picker uses this — there's no program to
+ * look up a coach_id from), and an unrecognized/absent programId falls through to Sanku rather
+ * than silence: every session gets a coach by default now, book-sourced program or not. Exposed
+ * separately from evaluate() so a caller that only needs the id (the live per-set reaction feed,
+ * not a fresh evaluation) does not have to re-encode this chain a second time.
+ */
+export function resolveCoachId(programId, opts = {}) {
+  return opts.coachId || PROGRAM_BY_ID[programId]?.coach_id || 'sanku'
+}
+
+/**
  * @param {string} programId - a programs.json id, or null/unknown for "no specific program"
  * @param {Array} sessions - oldest-first, from progression.js's sessionsFor(S, exId, cfg)
  * @param {{ id: string }} cfg - the routine's own prescription for this exercise
- * @param {{ coachId?: string }} opts - coachId forces a specific coach regardless of programId
- *   (freestyle's own coach picker uses this — there's no program to look up a coach_id from).
- *   Without it, an unrecognized programId falls through to Sanku rather than silence: every
- *   session gets a coach by default now, book-sourced program or not.
+ * @param {{ coachId?: string }} opts - see resolveCoachId
  * @returns {object[]} 0+ Suggestion objects. Even with no history logged every coach still has
  *   an opening line — its own ideology, stated plainly, rather than silence on session one.
  */
 export function evaluate(programId, sessions, cfg, opts = {}) {
   const program = PROGRAM_BY_ID[programId]
-  const coachId = opts.coachId || program?.coach_id || 'sanku'
+  const coachId = resolveCoachId(programId, opts)
 
   switch (coachId) {
     case 'mentzer': { const s = evaluateMentzer(sessions, cfg); return s ? [s] : [] }

@@ -5,7 +5,7 @@
 // either imports this file, so there is no cycle.
 import { buildSets, applyIntensifierPlan, modeOf } from './history.js'
 import { nextPrescription, applyPrescription, defaultIncrement, weightIncrement, sessionsFor } from './progression.js'
-import { evaluate } from './coaches/index.js'
+import { evaluate, resolveCoachId } from './coaches/index.js'
 
 export function buildSessionEntries(st, r) {
   // The prescription is applied as the session is built, so you walk up to the bar with the
@@ -24,7 +24,10 @@ export function buildSessionEntries(st, r) {
     // isn't switched off for this entry; a planned deload shouldn't also get told to add
     // weight or deload again.
     const coach = !excluded ? evaluate(r?.programId, sessionsFor(st, cfg.id, cfg), cfg) : []
-    return { id: cfg.id, sg: cfg.sg, target: { ...cfg }, plan, sets, coach }
+    // Stored alongside `coach` so the live per-set reaction feed (Workout.jsx's toggle()) can
+    // speak in the same voice without re-resolving programId → coach_id itself mid-workout.
+    const coachId = resolveCoachId(r?.programId)
+    return { id: cfg.id, sg: cfg.sg, target: { ...cfg }, plan, sets, coach, coachId }
   })
   return { entries, excluded }
 }

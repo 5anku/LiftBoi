@@ -19,8 +19,9 @@ import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
 import { nextPrescription, applyPrescription, defaultIncrement, weightIncrement, stepWeight, sessionsFor, riskyJump } from '../lib/progression.js'
 import { progressionGuidance } from '../lib/progression-copy.js'
-import { evaluate } from '../lib/coaches/index.js'
+import { evaluate, resolveCoachId } from '../lib/coaches/index.js'
 import { backoffFor } from '../lib/coaches/shared/progression-mechanics.js'
+import { reactToSet } from '../lib/coaches/live-reaction.js'
 import { glyphOf } from '../lib/glyphs.js'
 import { isWarmupRow, isDropSet, isRestPauseSet, dropsOf, clustersOf, addDrop, addCluster, removeDropAt, removeClusterAt, setDropAt, setClusterAt, nextDropWeight, nextBurstReps } from '../lib/workout-model.js'
 import { canMoveActiveWorkoutUnit, moveActiveWorkoutUnit } from '../lib/active-workout-order.js'
@@ -527,6 +528,7 @@ function ActiveWorkout() {
     s.active.coachId = coachId
     s.active.entries.forEach(e => {
       e.coach = evaluate(null, sessionsFor(s, e.id, e.target), e.target, { coachId })
+      e.coachId = coachId
     })
   })
   const pairAt = (first, second) => update(s => {
@@ -654,7 +656,9 @@ function ActiveWorkout() {
         activeEntry.target = { ...cfg }
         activeEntry.plan = plan
         activeEntry.sets = [...doneWarm, ...freshWarm.slice(doneWarm.length), ...doneWork, ...freshWork.slice(doneWork.length)]
-        activeEntry.coach = evaluate(activeRoutine?.programId, sessionsFor(s, activeEntry.id, full), full, activeRoutine ? {} : { coachId: s.active.coachId })
+        const coachOpts = activeRoutine ? {} : { coachId: s.active.coachId }
+        activeEntry.coach = evaluate(activeRoutine?.programId, sessionsFor(s, activeEntry.id, full), full, coachOpts)
+        activeEntry.coachId = resolveCoachId(activeRoutine?.programId, coachOpts)
       })
     }, null, routine)
   }
@@ -737,6 +741,20 @@ function ActiveWorkout() {
     if (fresh && checked && fresh.entries[idx]) {
       const progress = setProgressHighWater(fresh.entries[idx], progressHighWater.current[idx] || 0)
       progressHighWater.current[idx] = progress.highWater
+
+      // Live, per-set commentary (chess.com's "after your move", not a verdict on the whole
+      // session) — only on a genuinely new completion, never a re-check of already-passed work,
+      // and only where a rep target makes "hit/missed/PR" mean anything.
+      if (progress.isNew && m === 'reps') {
+        const entry = fresh.entries[idx]
+        const row = entry.sets[i]
+        if (!isWarmupRow(row)) {
+          const goal = entry.target?.reps || 0
+          const best = Math.max(bestWeightFor(S, entry.id), (S.exWeights[entry.id] || {}).w || 0, (S.priorPRs?.[entry.id] || {}).w || 0)
+          const reaction = reactToSet(entry.coachId || 'sanku', { reps: row.r || 0, weight: row.w || 0, goal, best, isLastWorkSet: exJustDone })
+          if (reaction) useUI.getState().showCoachToast(reaction.source_coach, reaction.message, reaction.severity)
+        }
+      }
 
       const freshUnits = supersetUnits(fresh.entries)
       const freshUnit = freshUnits.find(u => u.includes(idx))
@@ -911,8 +929,10 @@ function ActiveWorkout() {
         const insertAt = insertionIndexAfterCurrentUnit(supersetUnits(s.active.entries), s.active.cur, s.active.entries.length)
         // Freestyle opts out of automatic progression (no `plan`), but not out of the coach —
         // Sanku's the default for anything without its own coached program, freestyle included.
-        const coach = evaluate(routine?.programId, sessionsFor(s, ex.id, full), full, freestyle ? { coachId: s.active.coachId } : {})
-        s.active.entries.splice(insertAt, 0, { id: ex.id, target: { ...cfg }, plan, sets: applyIntensifierPlan(progressed, full), coach })
+        const coachOpts = freestyle ? { coachId: s.active.coachId } : {}
+        const coach = evaluate(routine?.programId, sessionsFor(s, ex.id, full), full, coachOpts)
+        const coachId = resolveCoachId(routine?.programId, coachOpts)
+        s.active.entries.splice(insertAt, 0, { id: ex.id, target: { ...cfg }, plan, sets: applyIntensifierPlan(progressed, full), coach, coachId })
         s.active.cur = insertAt
         useUI.getState().shiftRestOwner(insertAt, 1)
       })

@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => {
     exerciseHistorySheet: vi.fn(),
     coachPickerSheet: vi.fn(),
     coachSheet: vi.fn(),
+    showCoachToast: vi.fn(),
   }
   state.stopRest = vi.fn(() => { state.timer = null })
   state.stopWork = vi.fn(() => { state.work = null })
@@ -47,6 +48,7 @@ const mocks = vi.hoisted(() => {
     shiftRestOwner: vi.fn(),
     startWork: vi.fn(),
     toast: state.toast,
+    showCoachToast: state.showCoachToast,
   })
   return state
 })
@@ -587,6 +589,31 @@ describe('coach popup', () => {
   it('does not pop up when the coach has no opinion', async () => {
     await mount([exercise('plain-bench', [false], { coach: [] })])
     expect(mocks.coachSheet).not.toHaveBeenCalled()
+  })
+})
+
+describe('live coach reaction', () => {
+  it('fires a live per-set reaction in the entry\'s own coach voice on a genuinely new completion', async () => {
+    await mount([exercise('plain-bench', [false], { coachId: 'mentzer' })])
+    await toggleSet(0)
+
+    expect(mocks.showCoachToast).toHaveBeenCalledOnce()
+    const [coachId, message] = mocks.showCoachToast.mock.calls[0]
+    expect(coachId).toBe('mentzer')
+    expect(typeof message).toBe('string')
+  })
+
+  it('does not re-fire on an uncheck/re-check of already-completed work', async () => {
+    await mount([exercise('plain-bench', [true], { coachId: 'sanku' }), exercise('next', [false])], 0)
+    await toggleSet(0) // uncheck
+    await toggleSet(0) // re-check — back to the same high-water mark, not a new completion
+    expect(mocks.showCoachToast).not.toHaveBeenCalled()
+  })
+
+  it('stays quiet on a cardio set — there is no rep target to react to', async () => {
+    await mount([exercise('plain-treadmill', [false], { target: { mode: 'cardio', min: 20, speed: 8 }, coachId: 'wood' })])
+    await toggleSet(0)
+    expect(mocks.showCoachToast).not.toHaveBeenCalled()
   })
 })
 

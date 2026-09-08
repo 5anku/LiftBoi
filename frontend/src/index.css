@@ -1121,6 +1121,16 @@ h4.sec{
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* --- live coach reaction toast (chess.com-style, ambient, non-blocking) --- */
+#coach-toast{
+  position:fixed;left:50%;transform:translateX(-50%) translateY(8px);
+  bottom:calc(160px + var(--sab));z-index:200;width:min(92vw,380px);
+  opacity:0;pointer-events:none;transition:opacity var(--med),transform var(--med) var(--ease);
+  filter:drop-shadow(0 10px 24px rgba(0,0,0,.45));
+}
+#coach-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#coach-toast .coach-bubble{margin:0}
+
 /* ---------------------------------------------------------------- misc --- */
 .empty{text-align:center;color:var(--label-2);padding:44px 20px;font-size:15px;line-height:1.45}
 .empty .ico{font-size:34px;color:var(--label-2);margin-bottom:12px;display:flex;justify-content:center}

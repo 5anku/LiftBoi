@@ -57,6 +57,7 @@ const maybeRestNotification = async () => {
 }
 
 let toastTm = null
+let coachToastTm = null
 let timerInt = null
 let timerTick = null
 let workInt = null
@@ -66,6 +67,7 @@ let workDone = null
 export const useUI = create((set, get) => ({
   sheets: [],          // { id, render:(close)=>JSX, kind:'sheet'|'center', locked }
   toastMsg: '',
+  coachToast: null,    // a live, per-set coach reaction — { coachId, message, severity } | null
   timer: null,         // rest countdown between sets — { left, total, endsAt, forIdx }
                        // forIdx: index of the active entry whose set started the rest (undefined when unknown)
   work: null,          // work countdown DURING a timed set (issue #16) — { left, total, endsAt, label }
@@ -89,6 +91,14 @@ export const useUI = create((set, get) => ({
     set({ toastMsg: msg })
     clearTimeout(toastTm)
     toastTm = setTimeout(() => set({ toastMsg: '' }), 2200)
+  },
+
+  // Ambient, non-blocking — chess.com's after-the-move commentary, not a dialog you dismiss.
+  // A longer hold than the plain toast: there's a face and a name to actually read here.
+  showCoachToast(coachId, message, severity = 'info') {
+    set({ coachToast: { coachId, message, severity } })
+    clearTimeout(coachToastTm)
+    coachToastTm = setTimeout(() => set({ coachToast: null }), 3400)
   },
 
   startRest(sec, forIdx) {
