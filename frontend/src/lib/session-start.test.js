@@ -31,10 +31,11 @@ describe('buildSessionEntries', () => {
     expect(entries[0].coach[0].source_coach).toBe('mentzer')
   })
 
-  it('defaults to Sanku for a routine with no recognized program, who has nothing to say without history', () => {
+  it('defaults to Sanku for a routine with no recognized program, opening with his ideology on a fresh lift', () => {
     const r = { id: 'r', ex: [{ id: '0025', sets: 1, reps: 8, weight: 50, prog: 'off' }] }
     const { entries } = buildSessionEntries(st, r)
-    expect(entries[0].coach).toEqual([])
+    expect(entries[0].coach[0].source_coach).toBe('sanku')
+    expect(entries[0].coach[0].source_rule).toBe('ideology_first_session')
   })
 
   it('has Sanku actually speak up for an uncoached routine once there is real history', () => {

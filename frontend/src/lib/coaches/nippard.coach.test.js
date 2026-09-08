@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { evaluateNippard, VARIANTS } from './nippard.coach.js'
 
-const session = (weight, ok, low) => ({ mode: 'reps', goal: 8, reps: [low], weight, count: 1, low, amrap: low, ok })
+const session = (weight, ok, low, rir) => ({ mode: 'reps', goal: 8, reps: [low], weight, count: 1, low, amrap: low, ok, rir: [rir ?? null] })
 
 describe('evaluateNippard', () => {
   it('rejects an unknown mechanic variant rather than guessing', () => {
@@ -14,8 +14,26 @@ describe('evaluateNippard', () => {
 
   for (const variant of ['last_set_failure_tightening', 'first_set_failure_loosening']) {
     describe(variant, () => {
-      it('has nothing to say with no history', () => {
-        expect(evaluateNippard([], { id: '0025' }, variant)).toBeNull()
+      it('opens with the RPE ideology on a fresh lift, not silence', () => {
+        const s = evaluateNippard([], { id: '0025' }, variant)
+        expect(s.source_rule).toBe('ideology_first_session')
+        expect(s.message).toContain('RIR')
+      })
+
+      it('flags a set rated too far from failure to autoregulate off', () => {
+        const s = evaluateNippard([session(50, false, 6, 4)], { id: '0025', bottom: 6, top: 8, inc: 2.5 }, variant)
+        expect(s.source_rule).toBe('rpe_autoregulation')
+        expect(s.message).toContain('short of failure')
+      })
+
+      it('flags rating every set at zero as no longer a useful signal', () => {
+        const s = evaluateNippard([session(50, false, 6, 0)], { id: '0025', bottom: 6, top: 8, inc: 2.5 }, variant)
+        expect(s.source_rule).toBe('rpe_autoregulation')
+      })
+
+      it('stays quiet on RPE when the rating is in the sweet spot', () => {
+        const s = evaluateNippard([session(50, false, 6, 1.5)], { id: '0025', bottom: 6, top: 8, inc: 2.5 }, variant)
+        expect(s.source_rule).toBe('double_progression_range_extend')
       })
 
       it('adds weight and resets to the bottom on a clean top-of-range session', () => {
@@ -40,8 +58,9 @@ describe('evaluateNippard', () => {
 
   for (const variant of ['top_set_pct1rm_rpe_wave', 'pct1rm_rpe_periodized_technique_rich']) {
     describe(variant, () => {
-      it('has nothing to say with no history', () => {
-        expect(evaluateNippard([], { id: '0043' }, variant)).toBeNull()
+      it('opens with the RPE ideology on a fresh lift, not silence', () => {
+        const s = evaluateNippard([], { id: '0043' }, variant)
+        expect(s.source_rule).toBe('ideology_first_session')
       })
 
       it('reports the logged weight without judging wave progression', () => {

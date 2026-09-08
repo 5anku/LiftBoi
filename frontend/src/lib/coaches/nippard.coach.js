@@ -24,6 +24,17 @@ function rangeExtendProgression(sessions, { bottom, top, inc }) {
   return { kind: 'hold', weight: last.weight, reps: aim, extended: aim > top }
 }
 
+// "RPE over ego": the number is only useful when it is honest. Silent in the sweet spot —
+// this coach only speaks up when the rating itself looks off, not on every session.
+function rirAdvice(session) {
+  const rated = (session.rir || []).filter(v => v != null)
+  if (!rated.length) return null
+  const avg = rated.reduce((a, b) => a + b, 0) / rated.length
+  if (avg >= 3) return 'You rated that a few reps short of failure on average — autoregulation only works if the number is honest. Push closer before you rate the next one.'
+  if (avg <= 0.3) return 'Every set rated at zero left — that works, but do it every session and the number stops telling you anything. Leave one clean rep on whichever set matters least.'
+  return null
+}
+
 /**
  * @param {Array} sessions - oldest-first, from progression.js's sessionsFor(S, exId, cfg)
  * @param {{ id: string, bottom?: number, top?: number, inc?: number }} cfg
@@ -39,12 +50,18 @@ export function evaluateNippard(sessions, cfg, variant) {
   if (variant === 'last_set_failure_tightening' || variant === 'first_set_failure_loosening') {
     const opts = { bottom: cfg.bottom ?? 6, top: cfg.top ?? 8, inc: cfg.inc ?? 2.5 }
     const r = rangeExtendProgression(sessions, opts)
-    if (r.kind === 'first') return null
+    if (r.kind === 'first') {
+      return suggest('hold', 'info',
+        'One thing before you start: rate your last set every session — 0 RIR means you could not have gotten another rep, 2 means one or two were still there. Chase that number honestly and the reps take care of themselves.',
+        'ideology_first_session')
+    }
     if (r.kind === 'up') {
       return suggest('add_weight', 'action',
         `Every set hit the top of the range — up to ${r.weight}, back to ${repWord(r.reps)}.`,
         'double_progression_range_extend')
     }
+    const advice = rirAdvice(sessions[sessions.length - 1])
+    if (advice) return suggest('hold', 'info', advice, 'rpe_autoregulation')
     return suggest('hold', 'info',
       r.extended
         ? `Same weight, range extends to ${repWord(r.reps)} — the block's own way of avoiding a reset.`
@@ -56,7 +73,11 @@ export function evaluateNippard(sessions, cfg, variant) {
   // report where you stand against the block's own baseline but can't yet judge week-to-week
   // wave progression — that needs the later weeks pulled from the source PDFs.
   const last = sessions[sessions.length - 1]
-  if (!last) return null
+  if (!last) {
+    return suggest('hold', 'info',
+      'Same idea applies here: rate every top set by feel, not just by whether the bar moved. RPE over ego — the number is the whole point of autoregulation.',
+      'ideology_first_session')
+  }
   return suggest('hold', 'info',
     `Logged at ${last.weight} — wave progression isn't tracked yet, only Week 1 baselines are in the library.`,
     'wave_progression_unavailable')

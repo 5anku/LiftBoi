@@ -10,11 +10,20 @@ const DEFAULTS = { bottom: 6, top: 10, inc: 2.5, deloadAt: 3 }
 // pushed further" means in practice — small enough to catch a real miss, not a rounding error.
 const BACKOFF_SHORTFALL = 2
 
+// A hot streak is worth pointing out even though it changes nothing about the prescription —
+// it's the whole "go for it" pitch backed by evidence, not just a slogan.
+const HYPE_STREAK = 3
+function hitStreak(sessions) {
+  let n = 0
+  for (let i = sessions.length - 1; i >= 0 && sessions[i].ok; i--) n++
+  return n
+}
+
 /**
  * @param {Array} sessions - oldest-first, from progression.js's sessionsFor(S, exId, cfg)
  * @param {{ id: string, bottom?: number, top?: number, inc?: number, deloadAt?: number }} cfg
- * @returns {object[]} 0-2 Suggestions — a progression call plus, only when the miss looks
- *   pushable, a separate backoff prompt the lifter can take or leave.
+ * @returns {object[]} 0-3 Suggestions — a progression call plus, optionally, a hot-streak
+ *   callout and/or a backoff prompt when the miss looks pushable.
  */
 export function evaluateSanku(sessions, cfg) {
   const opts = { ...DEFAULTS, ...cfg }
@@ -22,7 +31,18 @@ export function evaluateSanku(sessions, cfg) {
   const suggest = (signal, severity, message, rule) => ({ lift: cfg.id, signal, severity, message, source_coach: 'sanku', source_rule: rule })
   const out = []
 
-  if (r.kind === 'first') return out
+  if (r.kind === 'first') {
+    out.push(suggest('hold', 'info',
+      "First one's in the books. Chase the top of the range, and if you're not sure whether you can make the next jump — take it anyway. Worst case, you find out where the ceiling is today.",
+      'ideology_first_session'))
+    return out
+  }
+  const streak = hitStreak(sessions)
+  if (streak >= HYPE_STREAK) {
+    out.push(suggest('hold', 'info',
+      `${streak} clean sessions running — whatever you're doing, keep doing it. Don't be shy about pushing the next jump a little harder.`,
+      'hot_streak'))
+  }
   if (r.kind === 'up') {
     out.push(suggest('add_weight', 'action', `Top of the range every set — up to ${r.weight}, back to ${repWord(r.reps)}.`, 'double_progression'))
   } else if (r.kind === 'deload') {

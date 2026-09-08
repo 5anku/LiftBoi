@@ -5,8 +5,10 @@ import { evaluateMentzer } from './mentzer.coach.js'
 const session = (d, weight, reps, ok) => ({ d, mode: 'reps', goal: 8, reps, weight, count: reps.length, low: Math.min(...reps), amrap: reps[reps.length - 1], ok })
 
 describe('evaluateMentzer', () => {
-  it('has nothing to say with no history', () => {
-    expect(evaluateMentzer([], { id: '0025', sets: 1 })).toBeNull()
+  it('opens with the one-set-to-failure ideology on a fresh lift, not silence', () => {
+    const s = evaluateMentzer([], { id: '0025', sets: 1 })
+    expect(s.source_rule).toBe('ideology_first_session')
+    expect(s.message).toContain('true, honest failure')
   })
 
   it('calls an instant weight add the moment a set overshoots the 6-10 target', () => {
@@ -48,5 +50,12 @@ describe('evaluateMentzer', () => {
     const s = evaluateMentzer([session('2024-01-01', 50, [8], true)], { id: '0025', sets: 1 })
     expect(s.signal).toBe('hold')
     expect(s.source_rule).toBe('hold')
+    expect(s.message).toContain('real set')
+  })
+
+  it('reframes a miss as unfinished business, not defeat', () => {
+    const s = evaluateMentzer([session('2024-01-01', 50, [6], false)], { id: '0025', sets: 1 })
+    expect(s.signal).toBe('hold')
+    expect(s.message).toContain('Short of the mark')
   })
 })

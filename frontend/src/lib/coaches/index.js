@@ -18,9 +18,8 @@ export const PROGRAM_BY_ID = Object.fromEntries(programsData.programs.map(p => [
  *   (freestyle's own coach picker uses this — there's no program to look up a coach_id from).
  *   Without it, an unrecognized programId falls through to Sanku rather than silence: every
  *   session gets a coach by default now, book-sourced program or not.
- * @returns {object[]} 0+ Suggestion objects. A coach with nothing to say yet (no history logged)
- *   comes back as an empty array rather than throwing — evaluate() is meant to be called freely
- *   from the UI without a guard at every call site.
+ * @returns {object[]} 0+ Suggestion objects. Even with no history logged every coach still has
+ *   an opening line — its own ideology, stated plainly, rather than silence on session one.
  */
 export function evaluate(programId, sessions, cfg, opts = {}) {
   const program = PROGRAM_BY_ID[programId]

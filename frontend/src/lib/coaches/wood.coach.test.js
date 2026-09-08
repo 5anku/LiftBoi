@@ -4,8 +4,10 @@ import { evaluateWood } from './wood.coach.js'
 const session = (weight, ok, low) => ({ mode: 'reps', goal: 10, reps: [low], weight, count: 1, low, amrap: low, ok })
 
 describe('evaluateWood', () => {
-  it('has nothing to say with no history', () => {
-    expect(evaluateWood([], { id: '0025' })).toBeNull()
+  it('opens with the guardrail ideology on a fresh lift, not silence', () => {
+    const s = evaluateWood([], { id: '0025' })
+    expect(s.source_rule).toBe('ideology_first_session')
+    expect(s.message).toContain('7.5%')
   })
 
   it('adds weight and resets to the bottom of the range on a clean top-of-range session', () => {

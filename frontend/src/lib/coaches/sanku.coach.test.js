@@ -4,8 +4,16 @@ import { evaluateSanku } from './sanku.coach.js'
 const session = (weight, ok, low, goal = 8) => ({ mode: 'reps', goal, reps: [low], weight, count: 1, low, amrap: low, ok })
 
 describe('evaluateSanku', () => {
-  it('has nothing to say with no history', () => {
-    expect(evaluateSanku([], { id: '0025' })).toEqual([])
+  it('opens with the "go for it" ideology on a fresh lift, not silence', () => {
+    const s = evaluateSanku([], { id: '0025' })
+    expect(s).toHaveLength(1)
+    expect(s[0].source_rule).toBe('ideology_first_session')
+  })
+
+  it('calls out a hot streak on top of the regular suggestion', () => {
+    const sessions = [session(50, true, 10, 10), session(52.5, true, 10, 10), session(55, true, 10, 10)]
+    const s = evaluateSanku(sessions, { id: '0025' })
+    expect(s.some(x => x.source_rule === 'hot_streak')).toBe(true)
   })
 
   it('adds weight on a clean top-of-range session, with no backoff prompt', () => {

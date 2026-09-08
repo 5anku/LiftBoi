@@ -20,6 +20,7 @@ import { modeOf, repStep, rerampWarmups } from './history.js'
 import { EXIDX } from './exercises.js'
 import { isWarmupRow } from './workout-model.js'
 import { normalizeRepRange } from './rep-range.js'
+import { rirOf } from './effort.js'
 
 export const POLICIES = ['off', 'linear', 'greyskull', 'double', 'time']
 
@@ -136,8 +137,11 @@ export function readSession(entry, fallback) {
   }
   const goal = target.reps || 0
   const reps = sets.map(s => (s.done ? (s.r || 0) : 0))
+  // Parallel to `reps` (same index, null where a set was never rated) — Nippard's whole
+  // ideology is autoregulating off this number rather than the rep count alone.
+  const rir = sets.map(s => (s.done ? rirOf(s) : null))
   return {
-    mode, goal, reps,
+    mode, goal, reps, rir,
     weight: Math.max(0, ...sets.filter(s => s.done).map(s => s.w || 0)),
     count: reps.length,                                   // the dimension bodyweight work grows (#33)
     low: reps.length ? Math.min(...reps) : 0,

@@ -24,10 +24,15 @@ function weeksSinceProgress(sessions) {
  */
 export function evaluateMentzer(sessions, cfg) {
   const last = sessions[sessions.length - 1]
-  if (!last) return null
 
   const suggest = (signal, severity, message, rule) =>
     ({ lift: cfg.id, signal, severity, message, source_coach: 'mentzer', source_rule: rule })
+
+  if (!last) {
+    return suggest('hold', 'info',
+      'Forget everything you have heard about volume. Warm up, then one set, carried to true, honest failure — that is the entire stimulus. Give it everything, then get out.',
+      'ideology_first_session')
+  }
 
   const topRep = last.mode === 'reps' && last.reps ? last.reps[last.reps.length - 1] : 0
   if (topRep >= INSTANT_ADD_REPS) {
@@ -48,5 +53,7 @@ export function evaluateMentzer(sessions, cfg) {
       'junk_volume')
   }
 
-  return suggest('hold', 'info', 'On track — same weight, one set to true failure.', 'hold')
+  return last.ok
+    ? suggest('hold', 'info', 'Every rep required — that is a real set. Same weight next time, and find true failure again.', 'hold')
+    : suggest('hold', 'info', 'Short of the mark is not the same as failure. Get back under the bar and take it there properly.', 'hold')
 }

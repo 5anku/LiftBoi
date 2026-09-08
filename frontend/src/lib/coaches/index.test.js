@@ -36,8 +36,10 @@ describe('evaluate dispatch', () => {
     expect(s[0].mechanic_variant).toBe('first_set_failure_loosening')
   })
 
-  it('comes back empty when the coach itself has nothing to say yet', () => {
-    expect(evaluate('heavy_duty', [], { id: '0025' })).toEqual([])
+  it('every coach opens with an ideology message on a fresh lift rather than staying silent', () => {
+    const s = evaluate('heavy_duty', [], { id: '0025' })
+    expect(s).toHaveLength(1)
+    expect(s[0].source_rule).toBe('ideology_first_session')
   })
 
   it('every program in the catalog resolves to a known coach', () => {
