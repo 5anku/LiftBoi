@@ -645,6 +645,40 @@ describe('freestyle coach picker', () => {
   })
 })
 
+describe('risky jump warning', () => {
+  it('flags an unlogged set that jumps 20%+ over the best weight on record', async () => {
+    await mount([exercise('plain-bench', [true, false], {
+      sets: [{ w: 100, r: 5, done: true }, { w: 130, r: 5, done: false }], // 30% over
+    })], 0, {
+      workouts: [{ d: '2024-01-01', start: 1, entries: [{ id: 'plain-bench', sets: [{ w: 100, r: 5, done: true }] }] }],
+    })
+    const warn = container.querySelector('.progline.warn')
+    expect(warn?.textContent).toContain('Big jump')
+    expect(warn?.textContent).toContain('130')
+    expect(warn?.textContent).toContain('100')
+  })
+
+  it('says nothing for an ordinary jump, or with no history to compare against', async () => {
+    await mount([exercise('plain-bench', [false], { sets: [{ w: 102.5, r: 5, done: false }] })], 0, {
+      workouts: [{ d: '2024-01-01', start: 1, entries: [{ id: 'plain-bench', sets: [{ w: 100, r: 5, done: true }] }] }],
+    })
+    expect([...container.querySelectorAll('.progline')].some(el => el.textContent.includes('Big jump'))).toBe(false)
+
+    await mount([exercise('plain-bench', [false], { sets: [{ w: 200, r: 5, done: false }] })]) // no workouts at all
+    expect([...container.querySelectorAll('.progline')].some(el => el.textContent.includes('Big jump'))).toBe(false)
+  })
+
+  it('never flags bodyweight, cardio or timed work', async () => {
+    await mount([exercise('bw-exercise', [false], {
+      target: { mode: 'reps', reps: 10, weight: 0, bodyweight: true },
+      sets: [{ w: 50, r: 10, done: false }],
+    })], 0, {
+      workouts: [{ d: '2024-01-01', start: 1, entries: [{ id: 'bw-exercise', sets: [{ w: 0, r: 10, done: true }] }] }],
+    })
+    expect([...container.querySelectorAll('.progline')].some(el => el.textContent.includes('Big jump'))).toBe(false)
+  })
+})
+
 describe('progression guidance', () => {
   it('labels the visible outcome with the policy that calculated it', async () => {
     await mount([exercise('plain-bench', [false, false, false], {

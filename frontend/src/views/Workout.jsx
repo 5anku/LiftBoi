@@ -18,7 +18,7 @@ import { COACH_PERSONAS } from '../lib/coaches/personas.js'
 import { effortColor } from '../lib/effort.js'
 import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
-import { nextPrescription, applyPrescription, defaultIncrement, weightIncrement, stepWeight, sessionsFor } from '../lib/progression.js'
+import { nextPrescription, applyPrescription, defaultIncrement, weightIncrement, stepWeight, sessionsFor, riskyJump } from '../lib/progression.js'
 import { progressionGuidance } from '../lib/progression-copy.js'
 import { evaluate } from '../lib/coaches/index.js'
 import { backoffFor } from '../lib/coaches/shared/progression-mechanics.js'
@@ -117,8 +117,9 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
   // Only worth surfacing while there is still work left: once the exercise is finished, a note
   // telling you what to do in it is behind you, and the block is already long.
   const pinnedNote = entry.sets.some(s => !s.done) ? pinnedNoteFor(S, entry.id) : null
-  // The number is the heaviest logged set, or the working weight you kept.
-  const best = cardio ? 0 : Math.max(bestWeightFor(S, entry.id), (S.exWeights[entry.id] || {}).w || 0)
+  // The number is the heaviest logged set, the working weight you kept, or a PR you seeded
+  // yourself (issue: PR seeding) — whichever is highest.
+  const best = cardio ? 0 : Math.max(bestWeightFor(S, entry.id), (S.exWeights[entry.id] || {}).w || 0, (S.priorPRs?.[entry.id] || {}).w || 0)
   // What the progression policy decided for this session, and why (issue #17). Computed when
   // the session was built so the reason matches the numbers already in the rows.
   const plan = entry.plan
@@ -133,6 +134,11 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
   const cfg = { ...(entry.target || {}), id: entry.id }
   const bw = !cardio && isBw(cfg)
   const added = bw && entry.sets.some(s => s.w > 0)
+  // A risky-jump nudge, checked against the first work set still ahead of you — purely
+  // informational, never blocks logging. Bodyweight/cardio/timed work has no comparable weight
+  // to jump on, and there's nothing to compare against with no history yet either.
+  const nextWork = entry.sets.find(s => !s.done && !isWarmupRow(s))
+  const risky = !cardio && !timed && !bw && nextWork && riskyJump(nextWork.w, best)
   const loadStep = mode === 'reps' ? weightIncrement(cfg, S.unit) : 2.5
   const loadCol = { f: 'w', step: loadStep, dec: true, hd: bw ? t('Added ({0})', S.unit) : t('Weight ({0})', S.unit) }
   // The reps column is the total in every mode, unilateral included — the stepper walks in
@@ -295,6 +301,12 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
         (S.barWeights, per exercise) mid-workout. Weight ≤ bar leaves just the bar. */}
     {barInfo && <div className="small dim" style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
       <Icon name="dumbbell" style={{ fontSize: 12 }} />{barInfo.text}
+    </div>}
+    {/* Purely informational — the number stays whatever was typed either way, this just asks
+        "are you sure?" before a jump this size gets logged. */}
+    {risky && <div className="progline warn">
+      <Icon name="warning" />
+      <span><strong>{t('Big jump')}</strong> · {t('{0} {1} is {2}% over your best of {3} {1} — double check the number.', fmtNum(nextWork.w), S.unit, Math.round((nextWork.w - best) / best * 100), fmtNum(best))}</span>
     </div>}
     {guidance && <button type="button" className={'progline' + (plan.kind === 'deload' ? ' warn' : '')}
       aria-label={t('Open progression settings')} onClick={onProgressionSettings}>

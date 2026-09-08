@@ -174,6 +174,21 @@ export function stallCount(sessions) {
   return n
 }
 
+// A jump this much bigger than anything logged before reads as a likely typo (400 instead of
+// 40) or a genuinely reckless attempt far more often than it reads as real progress in one
+// session. 20% is well outside even an aggressive linear-progression jump on a heavy compound.
+const RISKY_JUMP_PCT = 20
+
+/**
+ * Is `weight` an unusually large jump over `priorBest`? Purely informational — never blocks
+ * logging, just a "double check that number" nudge. false for anything non-positive on either
+ * side, so a bodyweight exercise (weight 0) or an exercise with no history yet never flags.
+ */
+export function riskyJump(weight, priorBest, thresholdPct = RISKY_JUMP_PCT) {
+  if (!(weight > 0) || !(priorBest > 0)) return false
+  return (weight - priorBest) / priorBest * 100 >= thresholdPct
+}
+
 /**
  * The next prescription for one exercise.
  *

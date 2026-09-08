@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   readSession, sessionsFor, stallCount, nextPrescription, applyPrescription,
-  policyFor, defaultIncrement, weightIncrement, POLICIES_FOR, DELOAD_AFTER, MAX_BW_SETS
+  policyFor, defaultIncrement, weightIncrement, POLICIES_FOR, DELOAD_AFTER, MAX_BW_SETS, riskyJump
 } from './progression.js'
 import { EXDB } from './exercises.js'
 
@@ -67,6 +67,32 @@ describe('stallCount', () => {
     expect(stallCount([{ ok: false }, { ok: false }, { ok: false }])).toBe(3)
     expect(stallCount([{ ok: false }, { ok: true }, { ok: false }])).toBe(1)
     expect(stallCount([])).toBe(0)
+  })
+})
+
+describe('riskyJump', () => {
+  it('flags a jump at or past the default 20% threshold', () => {
+    expect(riskyJump(120, 100)).toBe(true)   // exactly 20% over
+    expect(riskyJump(125, 100)).toBe(true)
+    expect(riskyJump(119, 100)).toBe(false)
+  })
+
+  it('does not flag ordinary progression', () => {
+    expect(riskyJump(102.5, 100)).toBe(false)   // a normal small-plate jump
+    expect(riskyJump(100, 100)).toBe(false)     // same weight again
+    expect(riskyJump(90, 100)).toBe(false)      // lighter is never risky
+  })
+
+  it('never flags with no real history or no weight to check', () => {
+    expect(riskyJump(200, 0)).toBe(false)
+    expect(riskyJump(0, 100)).toBe(false)
+    expect(riskyJump(100, null)).toBe(false)
+    expect(riskyJump(null, 100)).toBe(false)
+  })
+
+  it('accepts a custom threshold', () => {
+    expect(riskyJump(105, 100, 10)).toBe(false)
+    expect(riskyJump(111, 100, 10)).toBe(true)
   })
 })
 
