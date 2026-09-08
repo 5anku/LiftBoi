@@ -11,10 +11,10 @@
 // Pending: approval from Nippard and Sean Wood (`wood`) to use their real identity; until either
 // lands, this file is the only thing that needs to change either way.
 export const COACH_PERSONAS = {
-  mentzer: { name: 'Mentzer', tagline: 'One set. True failure. No more, no less.', color: 'var(--red)' },
-  nippard: { name: 'Nippard', tagline: 'Autoregulated, RPE-driven, technical.', color: 'var(--blue)' },
-  wood: { name: 'Guardrail', tagline: 'Double progression, steady and guarded.', color: 'var(--orange)' },
-  sanku: { name: 'Sanku', tagline: 'Your own blend. Gated on feel.', color: 'var(--shadow)' }
+  mentzer: { name: 'Mentzer', tagline: 'One set. True failure. That’s the whole program.', color: 'var(--red)' },
+  nippard: { name: 'Nippard', tagline: 'RPE over ego — autoregulate and trust the number.', color: 'var(--blue)' },
+  wood: { name: 'Guardrail', tagline: 'Steady gains. A hard ceiling on every jump.', color: 'var(--orange)' },
+  sanku: { name: 'Sanku', tagline: 'Train by feel — earn the backoff, don’t force it.', color: 'var(--shadow)' }
 }
 
 // public/ is served at the site root, so this is the same path in dev and in the built app —
