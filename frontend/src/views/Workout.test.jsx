@@ -557,6 +557,38 @@ describe('Workout discard timer lifecycle', () => {
   })
 })
 
+describe('coach bubble', () => {
+  it('renders one bubble per Suggestion, named for the coach that made it', async () => {
+    await mount([exercise('plain-bench', [false], {
+      coach: [{ lift: 'plain-bench', signal: 'add_weight', severity: 'action', message: '12 reps — add weight.', source_coach: 'mentzer' }],
+    })])
+
+    const bubble = container.querySelector('.coach-bubble')
+    expect(bubble).toBeTruthy()
+    expect(bubble.classList.contains('warn')).toBe(true)
+    expect(bubble.textContent).toContain('Mentzer')
+    expect(bubble.textContent).toContain('12 reps — add weight.')
+  })
+
+  it('falls back to a plain initial avatar when the portrait has no image yet', async () => {
+    await mount([exercise('plain-bench', [false], {
+      coach: [{ lift: 'plain-bench', signal: 'hold', severity: 'info', message: 'On track.', source_coach: 'wood' }],
+    })])
+
+    // jsdom/linkedom never actually loads the <img>, so it never fires onError — the fallback
+    // only appears after that error, which real browsers deliver on every missing file. This
+    // just pins the not-yet-broken shape: an <img> pointed at the right URL, ready to fall back.
+    const img = container.querySelector('.coach-avatar')
+    expect(img.tagName).toBe('IMG')
+    expect(img.getAttribute('src')).toBe('/coaches/wood.png')
+  })
+
+  it('renders nothing when the coach has no opinion', async () => {
+    await mount([exercise('plain-bench', [false], { coach: [] })])
+    expect(container.querySelector('.coach-bubble')).toBeNull()
+  })
+})
+
 describe('progression guidance', () => {
   it('labels the visible outcome with the policy that calculated it', async () => {
     await mount([exercise('plain-bench', [false, false, false], {

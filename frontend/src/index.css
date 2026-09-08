@@ -818,6 +818,15 @@ h4.sec{
 .progline.warn{color:var(--yellow)}
 .progline svg{flex:none;margin-top:2px}
 
+/* the active program's coach, chess.com-style: portrait + speech bubble (issue: Stockfish Coach) */
+.coach-bubble{display:flex;align-items:flex-start;gap:8px;margin:8px 0 2px}
+.coach-avatar{width:36px;height:36px;border-radius:50%;flex:none;object-fit:cover;border:var(--hair) solid var(--sep)}
+.coach-avatar-fallback{display:flex;align-items:center;justify-content:center;color:#000;font-weight:700;font-size:15px}
+.coach-speech{position:relative;background:var(--surface-2);border:var(--hair) solid var(--sep);border-radius:12px;padding:6px 10px;font-size:13px;line-height:1.38;max-width:calc(100% - 44px)}
+.coach-speech strong{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--acc);margin-bottom:1px}
+.coach-bubble.warn .coach-speech strong{color:var(--yellow)}
+.coach-speech::before{content:'';position:absolute;left:-5px;top:10px;width:9px;height:9px;background:var(--surface-2);border-left:var(--hair) solid var(--sep);border-bottom:var(--hair) solid var(--sep);transform:rotate(45deg)}
+
 /* start a timed set (issue #16) — sits where you'd otherwise reach for the checkbox */
 .setrow .setgo{
   width:30px;height:30px;border-radius:50%;flex:none;

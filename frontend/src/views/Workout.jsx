@@ -12,6 +12,7 @@ import { t, exerciseNameFor } from '../lib/i18n.js'
 import { api } from '../lib/api.js'
 import { insertionIndexAfterCurrentUnit, nextUnfinishedUnit, setProgressHighWater, supersetFlowStep, restAfterSet, restOnRecheck, restSecFor } from '../lib/supersetFlow.js'
 import Media from '../components/Media.jsx'
+import CoachBubble from '../components/CoachBubble.jsx'
 import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, finishWorkout, workoutCompleteSheet, confirmSheet, exerciseNoteSheet, sessionNoteSheet, swapActiveWorkoutExercise, barWeightSheet, menuSheet, effortPickerSheet, exerciseHistorySheet, generatorSheet, programRecommenderSheet } from '../sheets.jsx'
 import { effortColor } from '../lib/effort.js'
 import Icon from '../components/Icon.jsx'
@@ -24,8 +25,6 @@ import { isWarmupRow, isDropSet, isRestPauseSet, dropsOf, clustersOf, addDrop, a
 import { canMoveActiveWorkoutUnit, moveActiveWorkoutUnit } from '../lib/active-workout-order.js'
 
 const SWIPE_MIN_DISTANCE = 48
-
-const COACH_ICON = { deload: 'arrowDown', add_weight: 'arrowUp', add_volume: 'plus', swap_exercise: 'shuffle', backoff_now: 'flag', hold: 'lightbulb' }
 const SWIPE_AXIS_RATIO = 1.25
 const SWIPE_IGNORED_TARGETS = 'button,input,textarea,select,a,[role="button"],[role="checkbox"],[role="switch"],[role="slider"],[contenteditable="true"],.exmedia,[data-swipe-ignore]'
 
@@ -299,13 +298,10 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
       <Icon name={plan.kind === 'up' ? 'arrowUp' : plan.kind === 'deload' ? 'arrowDown' : 'lightbulb'} />
       <span><strong>{t(guidance.policyLabel)}</strong> · {t(...guidance.why)}</span>
     </button>}
-    {/* One line per Suggestion from the active program's coach — plain English, not run through
-        t(): the message is built with numbers already interpolated in, so there's no fixed
-        template a translation could key off (see lib/coaches). */}
-    {coach.map((s, i) => <div key={i} className={'progline' + (s.severity !== 'info' ? ' warn' : '')}>
-      <Icon name={COACH_ICON[s.signal] || 'lightbulb'} />
-      <span><strong>{t('Coach')}</strong> · {s.message}</span>
-    </div>)}
+    {/* One bubble per Suggestion from the active program's coach — plain English, not run
+        through t(): the message is built with numbers already interpolated in, so there's no
+        fixed template a translation could key off (see lib/coaches). */}
+    {coach.map((s, i) => <CoachBubble key={i} coachId={s.source_coach} message={s.message} severity={s.severity} />)}
     <div className="card" style={{ marginTop: 10, marginBottom: 0 }}>
       {/* the header carries the same eff3 sizing as the rows, or the labels drift off their columns */}
       <div className={'sethead' + (col3 ? ' eff3' : '')}><span className="n-sp" /><span className="w-sp">{col1.hd}</span>{col2 && <span className="r-sp">{col2.hd}</span>}{col3 && <span className="eff-sp">{col3.hd}</span>}{timed && <span className="ck-sp" />}<span className="ck-sp" /></div>

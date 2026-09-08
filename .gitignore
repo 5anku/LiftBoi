@@ -28,3 +28,7 @@ frontend/bundle-size.json
 # See fonts/README.md in each folder for how to drop your own copy in locally.
 frontend/public/fonts/Eternal.ttf
 website/fonts/Eternal.ttf
+
+# Coach portraits (public/coaches/README.md) are user-supplied art of unconfirmed license —
+# same caution as Eternal above. CoachBubble falls back to a plain avatar when these are absent.
+frontend/public/coaches/*.png
