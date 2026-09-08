@@ -34,7 +34,7 @@ describe('evaluate dispatch', () => {
   })
 
   it('every program in the catalog resolves to a known coach', () => {
-    const known = new Set(['mentzer', 'wood', 'nippard', 'rp', 'sanku'])
+    const known = new Set(['mentzer', 'wood', 'nippard', 'sanku'])
     for (const p of Object.values(PROGRAM_BY_ID)) expect(known.has(p.coach_id)).toBe(true)
   })
 })

@@ -152,10 +152,6 @@
   ],
   "unmapped_coaches": [
     {
-      "coach_id": "rp",
-      "reason": "Israetel & Hoffmann's 'How Much Should I Train' is pure theory, contains no workout programs"
-    },
-    {
       "coach_id": "sanku",
       "reason": "reserved for the user's own future programs, not book-sourced"
     }

@@ -1,12 +1,11 @@
 # Coach portraits
 
-Five files, one per coach in `lib/coaches/personas.js` — drop them in here with these exact names:
+Four files, one per coach in `lib/coaches/personas.js` — drop them in here with these exact names:
 
 ```
 mentzer.png
 nippard.png
 wood.png
-rp.png
 sanku.png
 ```
 
@@ -19,7 +18,7 @@ sanku.png
   avatar (see the app's own git history for the image this was modeled on)
 
 Until a file is here, `CoachBubble` (components/CoachBubble.jsx) falls back to a plain colored
-circle with the coach's initial — the app works with zero, some, or all five files present.
+circle with the coach's initial — the app works with zero, some, or all four files present.
 
 **Licensing:** same rule as `public/fonts/` — don't commit art you don't have the rights to
 distribute. If a file's license is unclear, gitignore it here the way `Eternal.ttf` is gitignored

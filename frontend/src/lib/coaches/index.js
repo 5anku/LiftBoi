@@ -27,9 +27,6 @@ export function evaluate(programId, sessions, cfg) {
     case 'wood': { const s = evaluateWood(sessions, cfg); return s ? [s] : [] }
     case 'nippard': { const s = evaluateNippard(sessions, cfg, program.mechanic_variant); return s ? [s] : [] }
     case 'sanku': return evaluateSanku(sessions, cfg)
-    // RP has no owned program yet (see programs.json's unmapped_coaches) and its interface is a
-    // different shape besides — weekly-sets-per-muscle-group, not one exercise's session history.
-    // Call evaluateRP() directly once a program tags coach_id: "rp".
     default: return []
   }
 }
