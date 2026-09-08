@@ -412,6 +412,20 @@ describe('Workout set completion flow', () => {
   })
 })
 
+describe('Workout add exercise flow — coach', () => {
+  it('a freestyle add gets Sanku by default once there is real history for that exercise', async () => {
+    await mount([exercise('current', [true], { asked: true })], 0, {
+      workouts: [{ d: '2024-01-01', entries: [{ id: 'squat-with-history', sets: [{ done: true, r: 12, w: 100 }] }] }],
+    })
+    await addExerciseThroughSheets(
+      { id: 'squat-with-history' },
+      { mode: 'reps', sets: 1, reps: 8, weight: 100 },
+    )
+    const added = mocks.S.active.entries.find(e => e.id === 'squat-with-history')
+    expect(added.coach[0].source_coach).toBe('sanku')
+  })
+})
+
 describe('Workout add exercise flow', () => {
   it.each([
     ['freestyle', {}],

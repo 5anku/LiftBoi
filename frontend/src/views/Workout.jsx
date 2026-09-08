@@ -627,7 +627,7 @@ function ActiveWorkout() {
         activeEntry.target = { ...cfg }
         activeEntry.plan = plan
         activeEntry.sets = [...doneWarm, ...freshWarm.slice(doneWarm.length), ...doneWork, ...freshWork.slice(doneWork.length)]
-        activeEntry.coach = activeRoutine?.programId ? evaluate(activeRoutine.programId, sessionsFor(s, activeEntry.id, full), full) : []
+        activeEntry.coach = evaluate(activeRoutine?.programId, sessionsFor(s, activeEntry.id, full), full)
       })
     }, null, routine)
   }
@@ -882,7 +882,10 @@ function ActiveWorkout() {
         })
         const progressed = freestyle ? sets : applyPrescription(sets, plan, modeOf(full) === 'reps' ? weightIncrement(full, s.unit) : defaultIncrement(ex.id, s.unit))
         const insertAt = insertionIndexAfterCurrentUnit(supersetUnits(s.active.entries), s.active.cur, s.active.entries.length)
-        s.active.entries.splice(insertAt, 0, { id: ex.id, target: { ...cfg }, plan, sets: applyIntensifierPlan(progressed, full) })
+        // Freestyle opts out of automatic progression (no `plan`), but not out of the coach —
+        // Sanku's the default for anything without its own coached program, freestyle included.
+        const coach = evaluate(routine?.programId, sessionsFor(s, ex.id, full), full)
+        s.active.entries.splice(insertAt, 0, { id: ex.id, target: { ...cfg }, plan, sets: applyIntensifierPlan(progressed, full), coach })
         s.active.cur = insertAt
         useUI.getState().shiftRestOwner(insertAt, 1)
       })

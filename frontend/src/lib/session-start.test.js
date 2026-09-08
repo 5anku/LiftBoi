@@ -31,10 +31,28 @@ describe('buildSessionEntries', () => {
     expect(entries[0].coach[0].source_coach).toBe('mentzer')
   })
 
-  it('has nothing to say for a routine with no recognized program', () => {
+  it('defaults to Sanku for a routine with no recognized program, who has nothing to say without history', () => {
     const r = { id: 'r', ex: [{ id: '0025', sets: 1, reps: 8, weight: 50, prog: 'off' }] }
     const { entries } = buildSessionEntries(st, r)
     expect(entries[0].coach).toEqual([])
+  })
+
+  it('has Sanku actually speak up for an uncoached routine once there is real history', () => {
+    const stWithHistory = {
+      unit: 'kg', exWeights: {},
+      workouts: [
+        { d: '2024-01-01', entries: [{ id: '0025', sets: [{ done: true, r: 8, w: 50 }] }] },
+        { d: '2024-01-08', entries: [{ id: '0025', sets: [{ done: true, r: 4, w: 50 }] }] },
+        { d: '2024-01-15', entries: [{ id: '0025', sets: [{ done: true, r: 4, w: 50 }] }] },
+        { d: '2024-01-22', entries: [{ id: '0025', sets: [{ done: true, r: 4, w: 50 }] }] },
+      ],
+    }
+    // A plain custom routine — no programId, no coach_id to look up. This used to mean silence;
+    // Sanku is now the default for exactly this case (issue: coach pops up by default).
+    const r = { id: 'r', ex: [{ id: '0025', sets: 1, reps: 8, weight: 50, prog: 'off' }] }
+    const { entries } = buildSessionEntries(stWithHistory, r)
+    expect(entries[0].coach[0].source_coach).toBe('sanku')
+    expect(entries[0].coach[0].signal).toBe('deload')
   })
 
   it('skips the coach on a planned deload, same as it skips progression', () => {

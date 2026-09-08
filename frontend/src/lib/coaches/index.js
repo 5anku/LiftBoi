@@ -11,21 +11,25 @@ import { evaluateSanku } from './sanku.coach.js'
 export const PROGRAM_BY_ID = Object.fromEntries(programsData.programs.map(p => [p.id, p]))
 
 /**
- * @param {string} programId - a programs.json id
+ * @param {string} programId - a programs.json id, or null/unknown for "no specific program"
  * @param {Array} sessions - oldest-first, from progression.js's sessionsFor(S, exId, cfg)
  * @param {{ id: string }} cfg - the routine's own prescription for this exercise
- * @returns {object[]} 0+ Suggestion objects. An unknown program, or a coach with nothing to say
- *   yet (no history logged), comes back as an empty array rather than throwing — evaluate() is
- *   meant to be called freely from the UI without a guard at every call site.
+ * @param {{ coachId?: string }} opts - coachId forces a specific coach regardless of programId
+ *   (freestyle's own coach picker uses this — there's no program to look up a coach_id from).
+ *   Without it, an unrecognized programId falls through to Sanku rather than silence: every
+ *   session gets a coach by default now, book-sourced program or not.
+ * @returns {object[]} 0+ Suggestion objects. A coach with nothing to say yet (no history logged)
+ *   comes back as an empty array rather than throwing — evaluate() is meant to be called freely
+ *   from the UI without a guard at every call site.
  */
-export function evaluate(programId, sessions, cfg) {
+export function evaluate(programId, sessions, cfg, opts = {}) {
   const program = PROGRAM_BY_ID[programId]
-  if (!program) return []
+  const coachId = opts.coachId || program?.coach_id || 'sanku'
 
-  switch (program.coach_id) {
+  switch (coachId) {
     case 'mentzer': { const s = evaluateMentzer(sessions, cfg); return s ? [s] : [] }
     case 'wood': { const s = evaluateWood(sessions, cfg); return s ? [s] : [] }
-    case 'nippard': { const s = evaluateNippard(sessions, cfg, program.mechanic_variant); return s ? [s] : [] }
+    case 'nippard': { const s = evaluateNippard(sessions, cfg, opts.mechanicVariant || program?.mechanic_variant); return s ? [s] : [] }
     case 'sanku': return evaluateSanku(sessions, cfg)
     default: return []
   }

@@ -19,10 +19,11 @@ export function buildSessionEntries(st, r) {
     // default for its optional load.
     const step = modeOf(cfg) === 'reps' ? weightIncrement(cfg, st.unit) : defaultIncrement(cfg.id, st.unit)
     const sets = applyIntensifierPlan(applyPrescription(buildSets(st, cfg, { step, useTarget: plan.kind === 'off' }), plan, step), cfg)
-    // The coach only has an opinion when the routine came from a program it recognizes (see
-    // starter.js's programId tag) and progression itself isn't switched off for this entry —
-    // a planned deload shouldn't also get told to add weight or deload again.
-    const coach = !excluded && r?.programId ? evaluate(r.programId, sessionsFor(st, cfg.id, cfg), cfg) : []
+    // Every session gets a coach by default now — Sanku, unless the routine came from a
+    // program with its own (see starter.js's programId tag) — as long as progression itself
+    // isn't switched off for this entry; a planned deload shouldn't also get told to add
+    // weight or deload again.
+    const coach = !excluded ? evaluate(r?.programId, sessionsFor(st, cfg.id, cfg), cfg) : []
     return { id: cfg.id, sg: cfg.sg, target: { ...cfg }, plan, sets, coach }
   })
   return { entries, excluded }

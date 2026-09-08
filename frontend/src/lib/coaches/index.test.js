@@ -4,8 +4,15 @@ import { evaluate, PROGRAM_BY_ID } from './index.js'
 const session = (weight, ok, low, goal = 8) => ({ mode: 'reps', goal, reps: [low], weight, count: 1, low, amrap: low, ok })
 
 describe('evaluate dispatch', () => {
-  it('returns nothing for an unknown program instead of throwing', () => {
-    expect(evaluate('not_a_real_program', [session(50, true, 8)], { id: '0025' })).toEqual([])
+  it('defaults to Sanku instead of throwing for an unknown/missing program', () => {
+    const s = evaluate('not_a_real_program', [session(50, true, 8)], { id: '0025' })
+    expect(s[0].source_coach).toBe('sanku')
+    expect(evaluate(undefined, [session(50, true, 8)], { id: '0025' })[0].source_coach).toBe('sanku')
+  })
+
+  it('opts.coachId forces a specific coach regardless of programId — freestyle\'s own picker', () => {
+    const s = evaluate('not_a_real_program', [session(50, true, 12)], { id: '0025', sets: 1 }, { coachId: 'mentzer' })
+    expect(s[0].source_coach).toBe('mentzer')
   })
 
   it('routes heavy_duty to Mentzer', () => {
