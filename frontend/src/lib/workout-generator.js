@@ -85,13 +85,16 @@ const STYLE_LABEL = { auto: 'Autoregulated', failure: 'To Failure', volume: 'Vol
  * unrelated history for the same exercise id from some other routine.
  *
  * @param {object} S - app state (for best1RM lookups)
- * @param {{focus: string, style?: string}} opts - focus: bench|squat|deadlift|ohp|push|pull|legs|surprise
- *   style: auto|failure|volume|pr|surprise (default surprise)
+ * @param {{focus: string, style?: string, mainId?: string}} opts - focus:
+ *   bench|squat|deadlift|ohp|push|pull|legs|surprise; style: auto|failure|volume|pr|surprise
+ *   (default surprise); mainId overrides the random main-lift pick for a category focus — the
+ *   generator sheet uses this once the lifter has picked one of the 3 options it offered,
+ *   rather than re-rolling a lift they didn't choose.
  * @param {function} rng - injectable for deterministic tests; defaults to Math.random
  */
-export function generateWorkout(S, { focus, style = 'surprise' }, rng = Math.random) {
+export function generateWorkout(S, { focus, style = 'surprise', mainId: forcedMainId }, rng = Math.random) {
   const resolvedFocus = focus === 'surprise' ? pick(Object.keys(CATEGORY_LIFTS), rng) : focus
-  const mainId = MAIN_LIFTS[resolvedFocus] || pick(CATEGORY_LIFTS[resolvedFocus] || CATEGORY_LIFTS.push, rng)
+  const mainId = forcedMainId || MAIN_LIFTS[resolvedFocus] || pick(CATEGORY_LIFTS[resolvedFocus] || CATEGORY_LIFTS.push, rng)
   const resolvedStyle = style === 'surprise' ? pick(STYLES, rng) : style
 
   const e1rm = best1RM(S, mainId)?.est || null
@@ -112,6 +115,21 @@ export function generateWorkout(S, { focus, style = 'surprise' }, rng = Math.ran
     about: `${STYLE_LABEL[resolvedStyle]} · generated`,
     ex: [...main, ...accessories]
   }
+}
+
+// A category (push/pull/legs, or 'surprise' once resolved to one of those) has 3 candidate main
+// lifts to choose between; a named lift (bench/squat/deadlift/ohp) has exactly one and skips the
+// choice entirely — the generator sheet uses this to decide whether to show the picker at all.
+export const CATEGORY_FOCI = Object.keys(CATEGORY_LIFTS)
+export const CATEGORY_NAME = { push: 'Push', pull: 'Pull', legs: 'Legs' }
+export const hasMainLiftChoice = focus => CATEGORY_FOCI.includes(focus)
+
+/** The (up to) 3 candidate main lifts for a category focus, to show as a real choice instead of
+ * silently rolling one — ids only; the caller resolves names/muscle tags from the exercise
+ * library, this file stays free of that lookup on purpose (see the header comment). */
+export function mainLiftOptions(focus, rng = Math.random) {
+  const pool = CATEGORY_LIFTS[focus]
+  return pool ? pickN(pool, Math.min(3, pool.length), rng) : []
 }
 
 export const GENERATOR_FOCUS_OPTIONS = [

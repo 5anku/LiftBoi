@@ -16,7 +16,8 @@ function renderTop() {
   act(() => root.render(sheet.render(() => useUI.getState().closeSheet(sheet.id))))
   return host
 }
-const rowFor = (host, name) => [...host.querySelectorAll('.item')].find(el => el.querySelector('.tt')?.textContent === name)
+const cardFor = (host, name) => [...host.querySelectorAll('.coach-card')].find(el => el.querySelector('.coach-card-name')?.textContent === name)
+const confirmButton = host => [...host.querySelectorAll('button')].find(b => b.className.includes('primary'))
 
 beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -29,20 +30,40 @@ afterEach(() => {
 })
 
 describe('coachPickerSheet', () => {
-  it('lists every coach and marks the current one', () => {
+  it('shows every coach as a card, opened on the current one', () => {
     coachPickerSheet('mentzer', vi.fn())
     const host = renderTop()
-    for (const name of ['Mentzer', 'Nippard', 'Guardrail', 'Sanku']) expect(rowFor(host, name)).toBeTruthy()
-    expect(rowFor(host, 'Mentzer').querySelector('.accent')).toBeTruthy()
-    expect(rowFor(host, 'Sanku').querySelector('.accent')).toBeFalsy()
+    for (const name of ['Mentzer', 'Nippard', 'Guardrail', 'Sanku']) expect(cardFor(host, name)).toBeTruthy()
+    expect(confirmButton(host).textContent).toContain('Keep Mentzer')
   })
 
-  it('calls onPick with the tapped coach id and closes', () => {
+  it('tapping another card, then confirming, calls onPick with that coach and closes', () => {
     const onPick = vi.fn()
     coachPickerSheet('sanku', onPick)
     const host = renderTop()
-    act(() => { rowFor(host, 'Nippard').click() })
+    act(() => { cardFor(host, 'Nippard').click() })
+    expect(confirmButton(host).textContent).toContain('Train with Nippard')
+
+    act(() => { confirmButton(host).click() })
     expect(onPick).toHaveBeenCalledWith('nippard')
     expect(useUI.getState().sheets).toHaveLength(0)
+  })
+
+  it('tapping a dot moves the highlighted card the same as tapping the card itself', () => {
+    coachPickerSheet('sanku', vi.fn())
+    const host = renderTop()
+    const dots = host.querySelectorAll('.coach-dot')
+    expect(dots).toHaveLength(4)
+    act(() => { dots[2].click() }) // wood/Guardrail, third persona
+    expect(confirmButton(host).textContent).toContain('Guardrail')
+    expect(dots[2].className).toContain('is-on')
+  })
+
+  it('confirming without changing the selection still calls onPick with the current coach', () => {
+    const onPick = vi.fn()
+    coachPickerSheet('sanku', onPick)
+    const host = renderTop()
+    act(() => { confirmButton(host).click() })
+    expect(onPick).toHaveBeenCalledWith('sanku')
   })
 })

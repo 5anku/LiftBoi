@@ -11,7 +11,7 @@ import { beep, vibrate } from './lib/sound.js'
 import { t, dateLocale, instrFor, exerciseNameFor, getLang, INSTR_LANGS } from './lib/i18n.js'
 import { nav } from './lib/nav.js'
 import { buildStarterPlan, starterPlanDays, starterPlanOptions } from './lib/starter.js'
-import { generateWorkout, GENERATOR_FOCUS_OPTIONS, GENERATOR_STYLE_OPTIONS } from './lib/workout-generator.js'
+import { generateWorkout, GENERATOR_FOCUS_OPTIONS, GENERATOR_STYLE_OPTIONS, CATEGORY_FOCI, CATEGORY_NAME, hasMainLiftChoice, mainLiftOptions } from './lib/workout-generator.js'
 import { recommendPrograms, GOAL_OPTIONS, DAYS_OPTIONS, PHILOSOPHY_OPTIONS } from './lib/program-recommender.js'
 import Media, { Thumb } from './components/Media.jsx'
 import CoachBubble from './components/CoachBubble.jsx'
@@ -23,7 +23,7 @@ import { glyphOf, GLYPH_GROUPS, DEFAULT_GLYPH } from './lib/glyphs.js'
 import BodyMap from './components/BodyMap.jsx'
 import MuscleExplorer from './components/MuscleExplorer.jsx'
 import { exerciseMuscleSnapshot, loadOfWorkouts, MUSCLES, MUSCLE_NAME, FINE_MUSCLES, FINE_MUSCLE_NAME, normalizeMuscleGroups, hasExplicitMuscleMetadata } from './lib/muscles.js'
-import { COACH_PERSONAS } from './lib/coaches/personas.js'
+import { COACH_PERSONAS, coachAvatarSrc } from './lib/coaches/personas.js'
 import { evaluate } from './lib/coaches/index.js'
 import { parseImport, mergeImport } from './lib/import-csv.js'
 import { importHevyData, HevyApiError, HEVY_DEV_SETTINGS, mergeHevyRoutines } from './lib/import-hevy.js'
@@ -1850,15 +1850,43 @@ export function beginGeneratedWorkout(genRoutine, bw) {
 
 function GeneratorChooser({ close }) {
   const [focus, setFocus] = useState(null)
-  const [style, setStyle] = useState(null)
+  // undefined = no lift chosen yet (still on the lift-pick step, if this focus has one);
+  // null = this focus has no pool to choose from (bench/squat/deadlift/ohp), step is skipped.
+  const [mainId, setMainId] = useState(undefined)
+  const [liftOptions, setLiftOptions] = useState(null)
+
+  const chooseFocus = f => {
+    // 'surprise' rolls a real category right away rather than leaving the lift-pick step to
+    // guess what "surprise" even means — the 3 options shown next are for that category.
+    const resolved = f === 'surprise' ? CATEGORY_FOCI[Math.floor(Math.random() * CATEGORY_FOCI.length)] : f
+    setFocus(resolved)
+    if (hasMainLiftChoice(resolved)) { setLiftOptions(mainLiftOptions(resolved)); setMainId(undefined) }
+    else setMainId(null)
+  }
 
   if (!focus) return <>
     <h3>{t('What do you want to hit today?')}</h3>
     <div className="list">
-      {GENERATOR_FOCUS_OPTIONS.map(o => <div key={o.value} className="item" {...tappable(() => setFocus(o.value))}>
+      {GENERATOR_FOCUS_OPTIONS.map(o => <div key={o.value} className="item" {...tappable(() => chooseFocus(o.value))}>
         <div className="grow"><div className="tt">{t(o.label)}</div></div>
         <Icon name="chevronRight" className="chev" />
       </div>)}
+    </div>
+  </>
+
+  // A category (or a resolved "surprise") gets a real choice of 3 real lifts instead of one
+  // silently rolled behind the scenes — "surprise me" should surprise you with options, not
+  // just with an outcome you had no say in.
+  if (mainId === undefined) return <>
+    <h3>{t('{0} day — pick your main lift', t(CATEGORY_NAME[focus]))}</h3>
+    <div className="list">
+      {liftOptions.map(id => {
+        const ex = exOr(id)
+        return <div key={id} className="item" {...tappable(() => setMainId(id))}>
+          <div className="grow"><div className="tt capitalize">{exerciseNameFor(ex)}</div><div className="ss">{t(ex.tg || ex.bp)} · {t(ex.eq)}</div></div>
+          <Icon name="chevronRight" className="chev" />
+        </div>
+      })}
     </div>
   </>
 
@@ -1867,7 +1895,7 @@ function GeneratorChooser({ close }) {
     <div className="list">
       {GENERATOR_STYLE_OPTIONS.map(o => <div key={o.value} className="item" {...tappable(() => {
         close()
-        const genRoutine = generateWorkout(S(), { focus, style: o.value })
+        const genRoutine = generateWorkout(S(), { focus, style: o.value, mainId })
         bwSheet({ required: true, onDone: bw => beginGeneratedWorkout(genRoutine, bw) })
       })}>
         <div className="grow"><div className="tt">{t(o.label)}</div><div className="ss">{t(o.sub)}</div></div>
@@ -1883,18 +1911,61 @@ export const generatorSheet = () => ui().openSheet(close => <GeneratorChooser cl
 // evaluate()) — this is where freestyle overrides that, session by session. Only meaningful
 // for freestyle: a routine that came from a real program keeps that program's own coach,
 // no picker needed or offered.
+// A swipeable card carousel — one big portrait at a time, like a streaming app's profile
+// picker — rather than a flat list, since there are only a handful of coaches and the point is
+// to pick who trains you by feel (the face, the tagline), not scan a menu.
 function CoachPicker({ current, onPick, close }) {
-  const pick = coachId => { onPick(coachId); close() }
+  const ids = Object.keys(COACH_PERSONAS)
+  const trackRef = useRef(null)
+  const [active, setActive] = useState(Math.max(0, ids.indexOf(current)))
+  const [broken, setBroken] = useState({})
+
+  // A tap on a card (or a dot) is the source of truth for `active`; the smooth-scroll is just
+  // this same choice reflected back at the carousel, not the other way around — happy-dom (and
+  // some real browsers under reduced-motion) never fires the scroll events a swipe would.
+  const select = i => {
+    setActive(i)
+    trackRef.current?.children[i]?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' })
+  }
+  const onScroll = () => {
+    const track = trackRef.current
+    if (!track) return
+    let closest = 0, closestDist = Infinity
+    ;[...track.children].forEach((el, i) => {
+      const dist = Math.abs(el.offsetLeft - track.scrollLeft)
+      if (dist < closestDist) { closestDist = dist; closest = i }
+    })
+    setActive(closest)
+  }
+  useEffect(() => {
+    trackRef.current?.children[active]?.scrollIntoView({ inline: 'center', block: 'nearest' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const activeId = ids[active]
+  const activePersona = COACH_PERSONAS[activeId]
+
   return <>
-    <h3>{t('Choose your coach')}</h3>
-    <div className="muted small" style={{ marginBottom: 12 }}>{t('Freestyle has no program of its own to pick a coach for you — choose who trains you this session.')}</div>
-    <div className="list">
-      {Object.entries(COACH_PERSONAS).map(([id, persona]) => <div key={id} className="item" {...tappable(() => pick(id))}>
-        <span className="lrow-i" style={{ background: persona.color }}>{persona.name[0]}</span>
-        <div className="grow"><div className="tt">{persona.name}</div><div className="ss">{persona.tagline}</div></div>
-        {current === id && <Icon name="check" className="accent" />}
-      </div>)}
+    <h3 style={{ textAlign: 'center' }}>{t('Choose your coach')}</h3>
+    <div className="muted small" style={{ marginBottom: 12, textAlign: 'center' }}>{t('Freestyle has no program of its own to pick a coach for you — choose who trains you this session.')}</div>
+    <div className="coach-carousel" ref={trackRef} onScroll={onScroll}>
+      {ids.map((id, i) => {
+        const persona = COACH_PERSONAS[id]
+        return <div key={id} className="coach-card" {...tappable(() => select(i))}>
+          {broken[id]
+            ? <div className="coach-card-avatar coach-card-avatar-fallback" style={{ background: persona.color }}>{persona.name[0]}</div>
+            : <img className="coach-card-avatar" src={coachAvatarSrc(id)} alt={persona.name} onError={() => setBroken(b => ({ ...b, [id]: true }))} />}
+          <div className="coach-card-name">{persona.name}</div>
+          <div className="coach-card-tagline">{persona.tagline}</div>
+        </div>
+      })}
     </div>
+    <div className="coach-dots">
+      {ids.map((id, i) => <span key={id} className={'coach-dot' + (i === active ? ' is-on' : '')} onClick={() => select(i)} />)}
+    </div>
+    <Button variant="primary" style={{ width: '100%', marginTop: 4 }} onClick={() => { onPick(activeId); close() }}>
+      {current === activeId ? t('Keep {0} as your coach', activePersona.name) : t('Train with {0}', activePersona.name)}
+    </Button>
   </>
 }
 export const coachPickerSheet = (current, onPick) => ui().openSheet(close => <CoachPicker current={current} onPick={onPick} close={close} />)

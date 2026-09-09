@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { EXIDX } from './exercises.js'
-import { generateWorkout } from './workout-generator.js'
+import { generateWorkout, hasMainLiftChoice, mainLiftOptions } from './workout-generator.js'
 
 // Deterministic PRNG (mulberry32) so a "random" run is reproducible in a test.
 function seeded(seed) {
@@ -137,5 +137,45 @@ describe('generateWorkout', () => {
     const a = generateWorkout(emptyS, { focus: 'legs', style: 'surprise' }, seeded(42))
     const b = generateWorkout(emptyS, { focus: 'legs', style: 'surprise' }, seeded(42))
     expect(a).toEqual(b)
+  })
+
+  it('builds around a chosen mainId instead of rolling a new one, once the lifter has picked', () => {
+    for (let seed = 0; seed < 20; seed++) {
+      const w = generateWorkout(emptyS, { focus: 'push', style: 'auto', mainId: '0091' }, seeded(seed))
+      expect(w.ex[0].id).toBe('0091')
+    }
+  })
+})
+
+describe('hasMainLiftChoice', () => {
+  it('is true for a category with more than one candidate main lift', () => {
+    expect(hasMainLiftChoice('push')).toBe(true)
+    expect(hasMainLiftChoice('pull')).toBe(true)
+    expect(hasMainLiftChoice('legs')).toBe(true)
+  })
+
+  it('is false for a named lift and for surprise itself (resolve it to a category first)', () => {
+    expect(hasMainLiftChoice('bench')).toBe(false)
+    expect(hasMainLiftChoice('squat')).toBe(false)
+    expect(hasMainLiftChoice('surprise')).toBe(false)
+  })
+})
+
+describe('mainLiftOptions', () => {
+  it('offers 3 distinct, real candidate lifts for a category', () => {
+    const opts = mainLiftOptions('push', seeded(1))
+    expect(opts).toHaveLength(3)
+    expect(new Set(opts).size).toBe(3)
+    for (const id of opts) expect(EXIDX[id], id).toBeTruthy()
+  })
+
+  it('shuffles the order across seeds rather than always the same 3', () => {
+    const orders = new Set()
+    for (let seed = 0; seed < 20; seed++) orders.add(mainLiftOptions('legs', seeded(seed)).join(','))
+    expect(orders.size).toBeGreaterThan(1)
+  })
+
+  it('returns nothing for a focus with no pool to choose from', () => {
+    expect(mainLiftOptions('bench')).toEqual([])
   })
 })
