@@ -33,7 +33,7 @@ describe('coachPickerSheet', () => {
   it('shows every coach as a card, opened on the current one', () => {
     coachPickerSheet('mentzer', vi.fn())
     const host = renderTop()
-    for (const name of ['Mentzer', 'Nippard', 'Guardrail', 'Sanku']) expect(cardFor(host, name)).toBeTruthy()
+    for (const name of ['Mentzer', 'Gauge', 'Guardrail', 'Sanku']) expect(cardFor(host, name)).toBeTruthy()
     expect(confirmButton(host).textContent).toContain('Keep Mentzer')
   })
 
@@ -41,8 +41,8 @@ describe('coachPickerSheet', () => {
     const onPick = vi.fn()
     coachPickerSheet('sanku', onPick)
     const host = renderTop()
-    act(() => { cardFor(host, 'Nippard').click() })
-    expect(confirmButton(host).textContent).toContain('Train with Nippard')
+    act(() => { cardFor(host, 'Gauge').click() })
+    expect(confirmButton(host).textContent).toContain('Train with Gauge')
 
     act(() => { confirmButton(host).click() })
     expect(onPick).toHaveBeenCalledWith('nippard')
