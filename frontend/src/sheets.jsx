@@ -1657,6 +1657,45 @@ function PlanImport({ bundle, close }) {
   </>
 }
 
+/* ============================ skip reason ============================ */
+// Why a planned day became rest or got pushed — entirely optional, just so a later look back
+// (reopening the same day in the calendar/day-override sheet) can tell a fair skip from a
+// pattern worth noticing. Never blocks the action it follows; "Skip without a reason" is
+// always there.
+const SKIP_REASONS = ['sick', 'travel', 'no_time', 'injury', 'life', 'other']
+const SKIP_REASON_LABEL = {
+  sick: () => t('Sick'), travel: () => t('Travel'), no_time: () => t('No time'),
+  injury: () => t('Injury / pain'), life: () => t('Life happened'), other: () => t('Other')
+}
+function SkipReasonSheet({ iso, close }) {
+  const [other, setOther] = useState(false)
+  const [note, setNote] = useState('')
+  const save = (reason, noteText) => {
+    update(s => { s.dayLog = s.dayLog || {}; s.dayLog[iso] = { reason, note: noteText || '', at: Date.now() } })
+    close()
+  }
+  if (other) return <>
+    <h3>{t('What happened?')}</h3>
+    <textarea className="input" rows={3} autoFocus placeholder={t('A word or two — just for you')}
+      value={note} onChange={e => setNote(e.target.value)} style={{ marginBottom: 12, width: '100%', resize: 'vertical' }} />
+    <Button variant="primary" onClick={() => save('other', note.trim())} disabled={!note.trim()}>{t('Save')}</Button>
+    <div style={{ height: 8 }} />
+    <Button variant="ghost" className="dim" onClick={close}>{t('Skip without a reason')}</Button>
+  </>
+  return <>
+    <h3>{t('Why skip this one?')}</h3>
+    <div className="muted small" style={{ marginBottom: 12 }}>{t('Totally optional — just for your own reflection later.')}</div>
+    <div className="list">
+      {SKIP_REASONS.filter(r => r !== 'other').map(r => <div key={r} className="item" {...tappable(() => save(r))}>
+        <div className="grow"><div className="tt">{SKIP_REASON_LABEL[r]()}</div></div>
+      </div>)}
+      <div className="item" {...tappable(() => setOther(true))}><div className="grow"><div className="tt">{t('Other')}</div></div></div>
+    </div>
+    <Button variant="ghost" className="dim" onClick={close}>{t('Skip without a reason')}</Button>
+  </>
+}
+const skipReasonSheet = iso => ui().openSheet(close => <SkipReasonSheet iso={iso} close={close} />)
+
 /* ============================ day override / assign ============================ */
 function DayOverride({ iso, close }) {
   const st = useStore(s => s.S)
@@ -1666,10 +1705,15 @@ function DayOverride({ iso, close }) {
   const effId = effectiveRoutineId(st, iso)
   const effRoutine = st.routines.find(r => r.id === effId)
   const loggedThatDay = st.workouts.some(w => w.d === iso)
+  // A day already skipped/pushed before carries its own note — shown back here so reopening
+  // the day (from the calendar or the week strip) is also where you'd reflect on it.
+  const skipNote = st.dayLog?.[iso]
   const set = v => {
+    const wasSkippingPlanned = v === 'rest' && !!effId
     update(s => { if (!v) delete s.dayPlan[iso]; else s.dayPlan[iso] = v })
     close()
     toast(v === '' ? t('Back to weekly plan') : v === 'rest' ? t('{0} set to rest', fmtDate(iso)) : t('{0} planned for {1}', (st.routines.find(r => r.id === v) || {}).name, fmtDate(iso)))
+    if (wasSkippingPlanned) skipReasonSheet(iso)
   }
   // "Not getting to this today" — move the whole slot one day later instead of losing it: this
   // day becomes rest, the next one gets whatever was planned here. Asks first if the next day
@@ -1680,6 +1724,7 @@ function DayOverride({ iso, close }) {
       update(s => { s.dayPlan[iso] = 'rest'; s.dayPlan[nextIso] = effId })
       close()
       toast(t('{0} pushed to {1}', effRoutine.name, fmtDate(nextIso)))
+      skipReasonSheet(iso)
     }
     const nextEffId = effectiveRoutineId(st, nextIso)
     if (nextEffId && nextEffId !== effId) {
@@ -1694,6 +1739,9 @@ function DayOverride({ iso, close }) {
   return <>
     <h3>{fmtDate(iso, true)}</h3>
     <div className="muted small" style={{ marginBottom: 12 }}>{t('Weekly plan:')} {weeklyR ? weeklyR.name : t('Rest')}{hasOvr && <span style={{ color: 'var(--orange)' }}> · {t('changed for this day')}</span>}<br />{t('Sick, missed a day or want a different session? Pick what to train instead.')}</div>
+    {skipNote && <div className="muted small" style={{ marginBottom: 12 }}>
+      {t('You noted:')} {skipNote.reason === 'other' ? skipNote.note : SKIP_REASON_LABEL[skipNote.reason]?.() || skipNote.reason}
+    </div>}
     {effRoutine && !loggedThatDay && <Button icon="chevronRight" variant="tinted" onClick={pushToTomorrow} style={{ marginBottom: 12 }}>{t('Push {0} to tomorrow', effRoutine.name)}</Button>}
     <div className="list">
       {st.routines.map(r => <div key={r.id} className="item" {...tappable(() => set(r.id))}>

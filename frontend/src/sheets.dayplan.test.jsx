@@ -25,6 +25,7 @@ function renderTop() {
 }
 const buttonFor = (host, label) => [...host.querySelectorAll('button')].find(b => b.textContent === label)
 const pushButton = host => [...host.querySelectorAll('button')].find(b => b.textContent.startsWith('Push'))
+const rowFor = (host, label) => [...host.querySelectorAll('.item')].find(el => el.querySelector('.tt')?.textContent === label)
 
 beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -33,7 +34,7 @@ beforeEach(() => {
     S: {
       ...s.S,
       routines: [{ id: 'mine', name: 'My routine', emoji: 'star', ex: [] }, { id: 'other', name: 'Other routine', emoji: 'legs', ex: [] }],
-      week: {}, dayPlan: {}, workouts: [], active: null
+      week: {}, dayPlan: {}, dayLog: {}, workouts: [], active: null
     }
   }))
   document.body.innerHTML = ''
@@ -73,7 +74,9 @@ describe('push to tomorrow', () => {
     expect(S().dayPlan[ISO]).toBe('rest')
     expect(S().dayPlan[NEXT]).toBe('mine')
     expect(useUI.getState().toastMsg).toContain('pushed')
-    expect(useUI.getState().sheets).toHaveLength(0) // closed itself, no confirmation needed
+    // Closed itself, no confirmation needed — but a (skippable) "why?" follows the push.
+    expect(useUI.getState().sheets).toHaveLength(1)
+    expect(renderTop().querySelector('h3').textContent).toContain('Why skip this one?')
   })
 
   it('asks first if the next day already has a different plan, and does nothing on cancel', () => {
@@ -101,5 +104,79 @@ describe('push to tomorrow', () => {
 
     expect(S().dayPlan[ISO]).toBe('rest')
     expect(S().dayPlan[NEXT]).toBe('mine')
+  })
+})
+
+describe('skip reason', () => {
+  it('offers a reason picker after pushing, and records a quick pick', () => {
+    useStore.setState(s => ({ S: { ...s.S, dayPlan: { [ISO]: 'mine' } } }))
+    dayOverrideSheet(ISO)
+    const host = renderTop()
+    act(() => { pushButton(host).click() })
+    const reasonHost = renderTop()
+
+    act(() => { rowFor(reasonHost, 'Sick').click() })
+    expect(S().dayLog[ISO]).toMatchObject({ reason: 'sick' })
+  })
+
+  it('offers a reason picker after marking a planned day rest, but not when it was already rest', () => {
+    useStore.setState(s => ({ S: { ...s.S, dayPlan: { [ISO]: 'mine' } } }))
+    dayOverrideSheet(ISO)
+    let host = renderTop()
+    act(() => { rowFor(host, 'Rest / skip this day').click() })
+    expect(useUI.getState().sheets).toHaveLength(1)
+    expect(renderTop().querySelector('h3').textContent).toContain('Why skip this one?')
+
+    useUI.setState({ sheets: [] })
+    dayOverrideSheet(ISO) // now already rest — picking rest again is not "skipping" anything
+    host = renderTop()
+    act(() => { rowFor(host, 'Rest / skip this day').click() })
+    expect(useUI.getState().sheets).toHaveLength(0)
+  })
+
+  it('can be skipped without recording anything', () => {
+    useStore.setState(s => ({ S: { ...s.S, dayPlan: { [ISO]: 'mine' } } }))
+    dayOverrideSheet(ISO)
+    const host = renderTop()
+    act(() => { pushButton(host).click() })
+    const reasonHost = renderTop()
+    act(() => { buttonFor(reasonHost, 'Skip without a reason').click() })
+
+    expect(S().dayLog[ISO]).toBeUndefined()
+    expect(useUI.getState().sheets).toHaveLength(0)
+  })
+
+  it('"Other" asks for a note and only saves once something is typed', () => {
+    useStore.setState(s => ({ S: { ...s.S, dayPlan: { [ISO]: 'mine' } } }))
+    dayOverrideSheet(ISO)
+    const host = renderTop()
+    act(() => { pushButton(host).click() })
+    // One live-mounted instance from here on — re-invoking sheet.render() would mount a fresh
+    // component and lose the "Other" toggle's state, same pitfall as re-rendering any sheet.
+    const reasonHost = renderTop()
+    act(() => { rowFor(reasonHost, 'Other').click() })
+
+    const saveBtn = buttonFor(reasonHost, 'Save')
+    expect(saveBtn.disabled).toBe(true)
+
+    const textarea = reasonHost.querySelector('textarea')
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set
+      setter.call(textarea, 'Flight got delayed')
+      textarea.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    act(() => { buttonFor(reasonHost, 'Save').click() })
+
+    expect(S().dayLog[ISO]).toMatchObject({ reason: 'other', note: 'Flight got delayed' })
+  })
+
+  it('shows a previously recorded reason when the day is reopened', () => {
+    useStore.setState(s => ({
+      S: { ...s.S, dayPlan: { [ISO]: 'rest' }, dayLog: { [ISO]: { reason: 'travel', note: '', at: 1 } } }
+    }))
+    dayOverrideSheet(ISO)
+    const host = renderTop()
+    expect(host.textContent).toContain('You noted:')
+    expect(host.textContent).toContain('Travel')
   })
 })
