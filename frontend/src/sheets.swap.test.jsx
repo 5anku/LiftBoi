@@ -1,11 +1,22 @@
 // @vitest-environment happy-dom
 import { LANGS } from './lib/i18n-core.js'
-import { act } from 'react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import React, { act } from 'react'
+import { createRoot } from 'react-dom/client'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { swapActiveWorkoutExercise } from './sheets.jsx'
-import { EXDB } from './lib/exercises.js'
+import { EXDB, exOr } from './lib/exercises.js'
 import { DEF, useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
+
+let mountedRoot = null
+function mountPickerSheet() {
+  const picker = useUI.getState().sheets.at(-1)
+  const host = document.createElement('div')
+  document.body.appendChild(host)
+  mountedRoot = createRoot(host)
+  act(() => mountedRoot.render(picker.render(picker.close)))
+  return host
+}
 
 const clone = value => JSON.parse(JSON.stringify(value))
 const ids = EXDB.slice(0, 3).map(exercise => exercise.id)
@@ -47,6 +58,10 @@ beforeEach(() => {
   installActive()
 })
 
+afterEach(() => {
+  if (mountedRoot) { act(() => mountedRoot.unmount()); mountedRoot = null }
+})
+
 describe('active exercise swap sheet flow', () => {
   it('invalidates a timed callback and replaces only the selected duplicate', () => {
     const callback = vi.fn()
@@ -63,6 +78,27 @@ describe('active exercise swap sheet flow', () => {
     expect(active.entries[0].sets).toEqual([{ w: 40, r: 5, done: false }])
     expect(active.entries[2].sets).toEqual([{ w: 40, r: 5, done: false }])
     expect(active.cur).toBe(1)
+  })
+})
+
+describe('active exercise swap picker — similar exercises', () => {
+  it('offers a "similar to" shortlist for the exercise being replaced, ahead of the full search', () => {
+    const S = clone(DEF)
+    S.active = {
+      id: 'swap-similar-test', d: '2026-08-27', start: Date.now(), routineId: null,
+      name: 'Swap similar test', bw: null, cur: 0,
+      entries: [entry('0025')] // barbell bench press
+    }
+    useStore.setState({ S, user: null })
+
+    swapActiveWorkoutExercise(0)
+    const host = mountPickerSheet()
+
+    expect(host.textContent).toContain('Similar to')
+    expect(host.textContent.toLowerCase()).toContain(exOr('0025').n)
+    const rows = [...host.querySelectorAll('.item')]
+    // At least one offered row shares the "press" movement word, not just the target muscle.
+    expect(rows.some(row => /press/i.test(row.querySelector('.tt')?.textContent || ''))).toBe(true)
   })
 })
 

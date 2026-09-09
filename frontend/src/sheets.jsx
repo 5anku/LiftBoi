@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
 import { EXDB, EXIDX, BODYPARTS, isCardio, isBodyweightEq, allExercises, equipmentOf, smOf, matchExercise, exOr } from './lib/exercises.js'
+import { similarExercises } from './lib/exercise-similar.js'
 import { activeProfile, exAvailable, ALL_EQUIPMENT, newProfile } from './lib/equipment.js'
 import { fmtDate, fmtNum, fmtVol, fmtDur, durPart, todayISO, isoOf, addDays, uid, exCount, DAYN, DAYS, weekOrder, weekStartOf, weekDayOffset, MONTHS_LONG, ACCENTS } from './lib/format.js'
 import { lastEntryFor, bestWeightFor, bestWeightForEntry, buildSets, effectiveRoutineId, workoutVolume, setsDone, setsDoneActive, lastBW, supersetUnits, unitOf, setLabel, defaultConfig, cleanupSg, modeOf, effortOf, EFFORT, capEffort, stepEffort, isBw, isPerSide, sideReps, workSetsDone, applyIntensifierPlan, MAX_PLANNED_WARMUPS, NOTE_MAX } from './lib/history.js'
@@ -985,7 +986,7 @@ function usageMap(st) {
   st.workouts.forEach(w => w.entries.forEach(e => { u[e.id] = (u[e.id] || 0) + 1 }))
   return u
 }
-function ExercisePicker({ onPick, close }) {
+function ExercisePicker({ onPick, close, swapFor }) {
   const st = useStore(s => s.S)
   const usage = usageMap(st)
   const [q, setQ] = useState('')
@@ -999,6 +1000,10 @@ function ExercisePicker({ onPick, close }) {
   const onSearchFocus = useSheetKeyboard(searchRef)
   const all = allExercises(st)
   const profile = activeProfile(st)
+  // Independent of search/body-part/equipment chips below — a swap's "similar to X" shortlist
+  // is a fixed offer, not something that should shrink or vanish as you fiddle with filters.
+  const equipmentPool = (profile && !showAll) ? all.filter(e => exAvailable(st, e)) : all
+  const similar = swapFor ? similarExercises(equipmentPool, swapFor) : []
   const inScope = e => bp === '★' ? usage[e.id] : bp === '☆' ? isFav(st, e.id) : (!bp || e.bp === bp)
   let base = all.filter(e => inScope(e) && matchExercise(e, q))
   if (bp === '★') base = [...base].sort((a, b) => (usage[b.id] - usage[a.id]) || exerciseNameFor(a).localeCompare(exerciseNameFor(b)))
@@ -1021,9 +1026,23 @@ function ExercisePicker({ onPick, close }) {
   </>
 
   return <>
-    <div className="row between" style={{ marginBottom: 10 }}><h3>{t('Add exercise')}</h3>
+    <div className="row between" style={{ marginBottom: 10 }}><h3>{t(swapFor ? 'Swap exercise' : 'Add exercise')}</h3>
       <Button size="sm" variant="tinted" icon="target" onClick={() => setByMuscle(true)}>{t('By muscle')}</Button>
     </div>
+    {/* A real shortlist instead of dropping straight into a full-library search — same target
+        muscle, ideally the same movement too (a press for a press, not a fly), ranked so the
+        closest substitute leads. The full picker below still works if none of these fit. */}
+    {swapFor && similar.length > 0 && <>
+      <div className="muted small" style={{ margin: '2px 0 8px' }}>{t('Similar to {0}', exerciseNameFor(swapFor))}</div>
+      <div className="list" style={{ marginBottom: 16 }}>
+        {similar.map(e => <div key={e.id} className="item" {...tappable(() => onPick(e))}>
+          <Thumb ex={e} /><div className="grow"><div className="tt capitalize">{exerciseNameFor(e)}</div><div className="ss capitalize">{t(e.tg || e.bp)} · {t(e.eq)}</div></div>
+          <button className="iconbtn chev" aria-label={t('Swap in “{0}”', exerciseNameFor(e))} style={{ padding: 8, margin: -8 }}
+            onClick={ev => { ev.stopPropagation(); onPick(e, true) }}><Icon name="plus" /></button>
+        </div>)}
+      </div>
+      <div className="muted small" style={{ margin: '2px 0 8px' }}>{t('Or pick anything else')}</div>
+    </>}
     {/* .picker-search is what index.css keys the keyboard-aware sheet layout on: the sheet
         lifts above the keys and the search stays put while the list scrolls under it. */}
     <div className="picker-search"><div className="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
@@ -1068,7 +1087,7 @@ function ExercisePicker({ onPick, close }) {
     {f.length > shown && <><div style={{ height: 8 }} /><Button onClick={() => setShown(s => s + 50)}>{t('Show more')}</Button></>}
   </>
 }
-export const exercisePicker = onPick => ui().openSheet(close => <ExercisePicker onPick={onPick} close={close} />)
+export const exercisePicker = (onPick, { swapFor } = {}) => ui().openSheet(close => <ExercisePicker onPick={onPick} close={close} swapFor={swapFor} />)
 
 /** Start a safe swap for one exact active-workout occurrence. */
 export function swapActiveWorkoutExercise(index) {
@@ -1077,7 +1096,10 @@ export function swapActiveWorkoutExercise(index) {
 
   // The "+" on a picker row commits with the default config, exactly as it does in the add
   // flows; tapping the row still opens the config sheet first.
-  const picker = exercisePicker((ex, quick) => quick ? swapTo(ex, defaultConfig(ex.id)) : exConfigSheet(ex, null, cfg => swapTo(ex, cfg), null, null))
+  const picker = exercisePicker(
+    (ex, quick) => quick ? swapTo(ex, defaultConfig(ex.id)) : exConfigSheet(ex, null, cfg => swapTo(ex, cfg), null, null),
+    { swapFor: exOr(active.entries[index].id) }
+  )
   function swapTo(ex, cfg) {
     // The picker is a chooser here, not a stack you keep adding from: one swap, then back to
     // the workout. (The add flow deliberately leaves it open.)
