@@ -4,6 +4,7 @@ import { useStore } from '../store/useStore.js'
 import { workoutControls } from '../lib/workout-controls.js'
 import { useUI } from '../store/useUI.js'
 import { exOr } from '../lib/exercises.js'
+import { exAvailable } from '../lib/equipment.js'
 import { usesBar, barWeightFor, plateSplit } from '../lib/bar.js'
 import { effectiveRoutine, lastEntryFor, bestWeightFor, bestWeightForEntry, buildSets, freestyleConfig, defaultConfig, setsDoneActive, supersetUnits, unitOf, setLabel, modeOf, isBw, isPerSide, sideReps, repStep, EFFORT, effortOf, stepEffort, capEffort, cascadeWeight, insertWarmupRow, removeRowAt, pairAdjacent, unpairSuperset, cleanupSg, applyIntensifierPlan, pinnedNoteFor, exNoteFor } from '../lib/history.js'
 import { fmtNum, fmtDate, todayISO, exCount, DAYN } from '../lib/format.js'
@@ -109,6 +110,10 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
     return { ...setClusterAt(row, ci, { r: v }), r: Math.max(0, (row.r || 0) + delta) }
   })
   const ex = exOr(entry.id)
+  // Equipment-profile aware (issue: hotel-gym lifters — a plan built at home doesn't know today's
+  // gym has no barbell). Flagged only while work remains, same reasoning pinnedNote already
+  // uses: once the exercise is done, telling you what you couldn't do about it is moot.
+  const equipmentGap = entry.sets.some(s => !s.done) && !exAvailable(S, ex)
   const mode = modeOf({ ...(entry.target || {}), id: entry.id })
   const cardio = mode === 'cardio'
   const timed = mode === 'time'
@@ -293,6 +298,18 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
       {ex.eq && <span className="tag">{t(ex.eq)}</span>}
       {best > 0 && <span className="tag nocap">{t('Best:')} {fmtNum(best)} {S.unit}</span>}
     </div>
+    {/* Equipment-profile aware: the plan named this exercise assuming your usual setup, but
+        today's gym (a hotel, a friend's garage) may not have it. Tappable straight into the same
+        swap picker the menu offers, already pre-filtered to what this profile actually has. */}
+    {equipmentGap && (onSwap
+      ? <button type="button" className="progline warn" aria-label={t('Swap exercise')} onClick={onSwap}>
+          <Icon name="warning" />
+          <span><strong>{t('Not in your gym')}</strong> · {t('No {0} in your current equipment — tap to swap for something you have.', t(ex.eq))}</span>
+        </button>
+      : <div className="progline warn">
+          <Icon name="warning" />
+          <span><strong>{t('Not in your gym')}</strong> · {t('No {0} in your current equipment.', t(ex.eq))}</span>
+        </div>)}
     {/* Three notes can apply to one exercise and they are not interchangeable, so each keeps its
         own line and its own icon: the plan's instruction (cfg.note, from the routine), the
         standing fact about the movement (exNotes), and the message you pinned to yourself last

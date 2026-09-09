@@ -1882,7 +1882,7 @@ function GeneratorChooser({ close }) {
     // guess what "surprise" even means — the 3 options shown next are for that category.
     const resolved = f === 'surprise' ? CATEGORY_FOCI[Math.floor(Math.random() * CATEGORY_FOCI.length)] : f
     setFocus(resolved)
-    if (hasMainLiftChoice(resolved)) { setLiftOptions(mainLiftOptions(resolved)); setMainId(undefined) }
+    if (hasMainLiftChoice(resolved)) { setLiftOptions(mainLiftOptions(resolved, S())); setMainId(undefined) }
     else setMainId(null)
   }
 

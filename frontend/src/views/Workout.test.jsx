@@ -691,6 +691,44 @@ describe('risky jump warning', () => {
   })
 })
 
+describe('equipment gap warning', () => {
+  const hotelGym = {
+    equipFilterOn: true, activeEquipId: 'hotel',
+    equipProfiles: [{ id: 'hotel', name: 'Hotel', equipment: ['dumbbell'] }],
+  }
+
+  it('flags an exercise the active equipment profile does not cover', async () => {
+    await mount([exercise('0025', [false])], 0, hotelGym) // barbell bench press, profile has no barbell
+    const warn = container.querySelector('.progline.warn')
+    expect(warn?.textContent).toContain('Not in your gym')
+  })
+
+  it('says nothing once the exercise is fully logged — nothing left to swap', async () => {
+    await mount([exercise('0025', [true])], 0, hotelGym)
+    expect([...container.querySelectorAll('.progline')].some(el => el.textContent.includes('Not in your gym'))).toBe(false)
+  })
+
+  it('says nothing when the profile does cover the exercise\'s equipment', async () => {
+    await mount([exercise('0025', [false])], 0, {
+      equipFilterOn: true, activeEquipId: 'home',
+      equipProfiles: [{ id: 'home', name: 'Home', equipment: ['barbell'] }],
+    })
+    expect([...container.querySelectorAll('.progline')].some(el => el.textContent.includes('Not in your gym'))).toBe(false)
+  })
+
+  it('says nothing with equipment filtering off (the default) — never a trap for someone who never set a profile up', async () => {
+    await mount([exercise('0025', [false])])
+    expect([...container.querySelectorAll('.progline')].some(el => el.textContent.includes('Not in your gym'))).toBe(false)
+  })
+
+  it('tapping the warning opens the swap picker', async () => {
+    await mount([exercise('0025', [false])], 0, hotelGym)
+    const warn = container.querySelector('.progline.warn')
+    await act(async () => { warn.dispatchEvent(new dom.Event('click', { bubbles: true })) })
+    expect(mocks.swapActiveWorkoutExercise).toHaveBeenCalledWith(0)
+  })
+})
+
 describe('progression guidance', () => {
   it('labels the visible outcome with the policy that calculated it', async () => {
     await mount([exercise('plain-bench', [false, false, false], {

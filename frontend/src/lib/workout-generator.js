@@ -4,6 +4,15 @@
 // pool starter.js already uses (see starter.test.js's EXIDX check), so nothing here can name
 // an exercise the library doesn't have.
 import { best1RM } from './onerm.js'
+import { EXDB, EXIDX } from './exercises.js'
+import { similarExercises } from './exercise-similar.js'
+import { exAvailable } from './equipment.js'
+
+// true when `S` has no equipment filter to check against (a caller that doesn't care, or a
+// profile-less/filter-off state — exAvailable's own "purely additive, never a trap" rule) or the
+// exercise is available under the active profile. `S` is optional everywhere below so existing
+// callers that never think about equipment keep working exactly as before.
+const equipmentOk = (S, id) => !S || exAvailable(S, EXIDX[id])
 
 const MAIN_LIFTS = {
   bench: '0025', squat: '0043', deadlift: '0032', ohp: '0091'
@@ -45,6 +54,34 @@ const pickN = (arr, n, rng) => {
   return out
 }
 const between = (lo, hi, rng) => lo + Math.floor(rng() * (hi - lo + 1))
+
+// Every canonical id in MAIN_LIFTS/CATEGORY_LIFTS happens to be a barbell exercise — real
+// enough for a home or commercial gym, useless in a hotel room with a pair of dumbbells. When
+// none of the canonical choices fit the active equipment profile, this finds real substitutes
+// patterned on them (same muscle/movement logic the swap picker uses) instead of handing back a
+// barbell exercise the lifter has no barbell for.
+function equipmentSafeAlternatives(S, canonicalIds, limit) {
+  const safeLibrary = EXDB.filter(e => equipmentOk(S, e.id))
+  const alts = new Map()
+  for (const id of canonicalIds) {
+    for (const alt of similarExercises(safeLibrary, EXIDX[id], limit)) alts.set(alt.id, alt.id)
+  }
+  return [...alts.keys()]
+}
+
+function pickMainId(S, resolvedFocus, rng) {
+  if (MAIN_LIFTS[resolvedFocus]) {
+    const canonical = MAIN_LIFTS[resolvedFocus]
+    if (equipmentOk(S, canonical)) return canonical
+    const alts = equipmentSafeAlternatives(S, [canonical], 3)
+    return alts.length ? pick(alts, rng) : canonical // no safe alternative — the "wrong" exercise beats none
+  }
+  const categoryPool = CATEGORY_LIFTS[resolvedFocus] || CATEGORY_LIFTS.push
+  const safePool = categoryPool.filter(id => equipmentOk(S, id))
+  if (safePool.length) return pick(safePool, rng)
+  const alts = equipmentSafeAlternatives(S, categoryPool, 3)
+  return alts.length ? pick(alts, rng) : pick(categoryPool, rng)
+}
 
 /** The main lift's sets for one style, given its estimated 1RM (or null — no history yet). */
 function mainSets(style, e1rm, rng) {
@@ -94,7 +131,7 @@ const STYLE_LABEL = { auto: 'Autoregulated', failure: 'To Failure', volume: 'Vol
  */
 export function generateWorkout(S, { focus, style = 'surprise', mainId: forcedMainId }, rng = Math.random) {
   const resolvedFocus = focus === 'surprise' ? pick(Object.keys(CATEGORY_LIFTS), rng) : focus
-  const mainId = forcedMainId || MAIN_LIFTS[resolvedFocus] || pick(CATEGORY_LIFTS[resolvedFocus] || CATEGORY_LIFTS.push, rng)
+  const mainId = forcedMainId || pickMainId(S, resolvedFocus, rng)
   const resolvedStyle = style === 'surprise' ? pick(STYLES, rng) : style
 
   const e1rm = best1RM(S, mainId)?.est || null
@@ -103,7 +140,11 @@ export function generateWorkout(S, { focus, style = 'surprise', mainId: forcedMa
   // A max attempt wants fresh legs and a fresh CNS, not a pump — light accessory work at most,
   // never the 2-4 exercises a normal accessory block gets.
   const accessoryCount = resolvedStyle === 'pr' ? between(0, 1, rng) : between(2, 4, rng)
-  const pool = (ACCESSORY_POOL[mainId] || []).filter(id => id !== mainId)
+  const rawPool = (ACCESSORY_POOL[mainId] || []).filter(id => id !== mainId)
+  const safePool = rawPool.filter(id => equipmentOk(S, id))
+  // Fewer than 2 equipment-safe accessories left isn't a real choice — better the full pool
+  // (equipment-mismatched or not) than a near-empty accessory block.
+  const pool = safePool.length >= 2 ? safePool : rawPool
   const accessories = pickN(pool, accessoryCount, rng).map(id => ({
     id, prog: 'off', sets: between(2, 4, rng), reps: between(8, 15, rng), weight: 0,
     note: 'Accessory · RPE 8-9'
@@ -126,10 +167,19 @@ export const hasMainLiftChoice = focus => CATEGORY_FOCI.includes(focus)
 
 /** The (up to) 3 candidate main lifts for a category focus, to show as a real choice instead of
  * silently rolling one — ids only; the caller resolves names/muscle tags from the exercise
- * library, this file stays free of that lookup on purpose (see the header comment). */
-export function mainLiftOptions(focus, rng = Math.random) {
+ * library, this file stays free of that lookup on purpose (see the header comment). `S` narrows
+ * the pool to what the active equipment profile actually has, falling back to the full pool if
+ * that would leave nothing to choose from. */
+export function mainLiftOptions(focus, S, rng = Math.random) {
   const pool = CATEGORY_LIFTS[focus]
-  return pool ? pickN(pool, Math.min(3, pool.length), rng) : []
+  if (!pool) return []
+  const safePool = pool.filter(id => equipmentOk(S, id))
+  if (safePool.length) return pickN(safePool, Math.min(3, safePool.length), rng)
+  // None of the canonical 3 fit this equipment — offer real substitutes instead of 3 exercises
+  // the lifter can't actually do.
+  const alts = equipmentSafeAlternatives(S, pool, 3)
+  const use = alts.length ? alts : pool
+  return pickN(use, Math.min(3, use.length), rng)
 }
 
 export const GENERATOR_FOCUS_OPTIONS = [

@@ -163,7 +163,7 @@ describe('hasMainLiftChoice', () => {
 
 describe('mainLiftOptions', () => {
   it('offers 3 distinct, real candidate lifts for a category', () => {
-    const opts = mainLiftOptions('push', seeded(1))
+    const opts = mainLiftOptions('push', null, seeded(1))
     expect(opts).toHaveLength(3)
     expect(new Set(opts).size).toBe(3)
     for (const id of opts) expect(EXIDX[id], id).toBeTruthy()
@@ -171,11 +171,54 @@ describe('mainLiftOptions', () => {
 
   it('shuffles the order across seeds rather than always the same 3', () => {
     const orders = new Set()
-    for (let seed = 0; seed < 20; seed++) orders.add(mainLiftOptions('legs', seeded(seed)).join(','))
+    for (let seed = 0; seed < 20; seed++) orders.add(mainLiftOptions('legs', null, seeded(seed)).join(','))
     expect(orders.size).toBeGreaterThan(1)
   })
 
   it('returns nothing for a focus with no pool to choose from', () => {
-    expect(mainLiftOptions('bench')).toEqual([])
+    expect(mainLiftOptions('bench', null)).toEqual([])
+  })
+})
+
+// A hotel-gym profile: dumbbells only, no barbell/cable/machine — every canonical id in
+// MAIN_LIFTS and CATEGORY_LIFTS is a barbell exercise, so this exercises the substitution path.
+const hotelGym = {
+  unit: 'kg', workouts: [],
+  equipFilterOn: true, activeEquipId: 'hotel',
+  equipProfiles: [{ id: 'hotel', name: 'Hotel', equipment: ['dumbbell'] }]
+}
+
+describe('equipment-aware generation', () => {
+  it('a named lift substitutes to equipment the profile actually has, not the canonical barbell', () => {
+    for (let seed = 0; seed < 20; seed++) {
+      const w = generateWorkout(hotelGym, { focus: 'bench', style: 'auto' }, seeded(seed))
+      const main = EXIDX[w.ex[0].id]
+      expect(main.eq).not.toBe('barbell')
+      expect(main.tg).toBe('pectorals') // still a chest press, just not on a bar the gym doesn't have
+    }
+  })
+
+  it('a category focus also avoids an all-barbell canonical pool', () => {
+    for (let seed = 0; seed < 20; seed++) {
+      const w = generateWorkout(hotelGym, { focus: 'push', style: 'volume' }, seeded(seed))
+      expect(EXIDX[w.ex[0].id].eq).not.toBe('barbell')
+    }
+  })
+
+  it('accessories also respect the equipment profile once there are enough safe ones', () => {
+    const w = generateWorkout(hotelGym, { focus: 'legs', style: 'auto' }, seeded(3))
+    const accessories = w.ex.filter(e => e.note.includes('Accessory'))
+    for (const e of accessories) expect(EXIDX[e.id].eq).not.toBe('barbell')
+  })
+
+  it('mainLiftOptions offers real dumbbell substitutes instead of 3 barbell exercises', () => {
+    const opts = mainLiftOptions('pull', hotelGym, seeded(4))
+    expect(opts.length).toBeGreaterThan(0)
+    for (const id of opts) expect(EXIDX[id].eq).not.toBe('barbell')
+  })
+
+  it('an unfiltered/no-profile state behaves exactly as before (no regression)', () => {
+    const w = generateWorkout(emptyS, { focus: 'bench', style: 'auto' }, seeded(1))
+    expect(w.ex[0].id).toBe('0025')
   })
 })
