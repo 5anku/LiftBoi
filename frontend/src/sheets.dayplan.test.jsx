@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
 import { dayOverrideSheet } from './sheets.jsx'
+import { effectiveRoutineId } from './lib/history.js'
 
 const mounted = []
 const S = () => useStore.getState().S
@@ -104,6 +105,48 @@ describe('push to tomorrow', () => {
 
     expect(S().dayPlan[ISO]).toBe('rest')
     expect(S().dayPlan[NEXT]).toBe('mine')
+  })
+})
+
+describe('swap with tomorrow', () => {
+  // ISO (2026-01-05) is a Monday, NEXT (2026-01-06) a Tuesday — weekdays 1 and 2.
+  it('exchanges two different planned days, rewriting the weekly schedule so it repeats', () => {
+    useStore.setState(s => ({ S: { ...s.S, week: { 1: 'mine', 2: 'other' }, dayPlan: { [ISO]: 'mine', [NEXT]: 'other' } } }))
+    dayOverrideSheet(ISO)
+    const host = renderTop()
+    act(() => { buttonFor(host, 'Swap with tomorrow (Other routine)').click() })
+
+    expect(S().week[1]).toBe('other')
+    expect(S().week[2]).toBe('mine')
+    // No dangling one-off override for this week — the recurring plan already reflects it.
+    expect(S().dayPlan[ISO]).toBeUndefined()
+    expect(S().dayPlan[NEXT]).toBeUndefined()
+
+    // And it sticks next week too, not just this one.
+    const NEXT_WEEK_ISO = '2026-01-12', NEXT_WEEK_NEXT = '2026-01-13'
+    expect(effectiveRoutineId(S(), NEXT_WEEK_ISO)).toBe('other')
+    expect(effectiveRoutineId(S(), NEXT_WEEK_NEXT)).toBe('mine')
+  })
+
+  it('can swap a planned day with a rest day', () => {
+    useStore.setState(s => ({ S: { ...s.S, week: { 1: 'mine' }, dayPlan: { [ISO]: 'mine', [NEXT]: 'rest' } } }))
+    dayOverrideSheet(ISO)
+    const host = renderTop()
+    act(() => { buttonFor(host, 'Swap with tomorrow (Rest)').click() })
+
+    expect(S().week[1]).toBeUndefined()
+    expect(S().week[2]).toBe('mine')
+  })
+
+  it('offers nothing to swap when tomorrow has the same plan, or either day is already logged', () => {
+    useStore.setState(s => ({ S: { ...s.S, dayPlan: { [ISO]: 'mine', [NEXT]: 'mine' } } }))
+    dayOverrideSheet(ISO)
+    expect(buttonFor(renderTop(), 'Swap with tomorrow (My routine)')).toBeFalsy()
+
+    useUI.setState({ sheets: [] })
+    useStore.setState(s => ({ S: { ...s.S, dayPlan: { [ISO]: 'mine', [NEXT]: 'other' }, workouts: [{ d: NEXT, entries: [] }] } }))
+    dayOverrideSheet(ISO)
+    expect(buttonFor(renderTop(), 'Swap with tomorrow (Other routine)')).toBeFalsy()
   })
 })
 

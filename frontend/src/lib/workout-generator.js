@@ -19,15 +19,16 @@ const MAIN_LIFTS = {
 }
 
 // A category picks a random main lift from its own pool rather than always the same one —
-// "Push Day" should not be Bench Day every single time.
+// "Push Day" should not be Bench Day every single time. Deadlift sits under pull, not legs —
+// it's a posterior-chain/back movement (see its accessory pool below), and belongs on back
+// day rather than crowding out squat/leg-press on leg day.
 const CATEGORY_LIFTS = {
   push: ['0025', '0091', '0047'],
-  pull: ['2330', '0027', '0841'],
-  legs: ['0043', '0032', '0739']
+  pull: ['2330', '0027', '0841', '0032'],
+  legs: ['0043', '0739']
 }
 
-// Which accessory pool a main lift borrows from. Deadlift and squat share the "legs" pool
-// (both are lower-body/posterior-chain), bench and ohp share "push".
+// Which accessory pool a main lift borrows from.
 const ACCESSORY_POOL = {
   '0025': ['0334', '0241', '0060', '0314', '0227', '0405'],   // bench: push
   '0091': ['0334', '0383', '0203', '0241'],                   // ohp: shoulders/triceps

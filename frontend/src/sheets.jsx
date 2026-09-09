@@ -1736,6 +1736,26 @@ function DayOverride({ iso, close }) {
       })
     } else doPush()
   }
+  // Reordering, not pushing: swap what's planned today with what's planned tomorrow. This
+  // rewrites the recurring weekly schedule itself (not just a one-off dayPlan override), so
+  // the new order sticks every week from here on — "do legs tomorrow instead of push" should
+  // not have to be repeated next week.
+  const nextIso = addDays(iso, 1)
+  const nextWd = new Date(nextIso + 'T12:00:00').getDay()
+  const nextEffId = effectiveRoutineId(st, nextIso)
+  const nextRoutine = st.routines.find(r => r.id === nextEffId)
+  const nextLogged = st.workouts.some(w => w.d === nextIso)
+  const canSwap = effId !== nextEffId && !loggedThatDay && !nextLogged
+  const swapWithTomorrow = () => {
+    update(s => {
+      if (nextEffId) s.week[wd] = nextEffId; else delete s.week[wd]
+      if (effId) s.week[nextWd] = effId; else delete s.week[nextWd]
+      delete s.dayPlan[iso]
+      delete s.dayPlan[nextIso]
+    })
+    close()
+    toast(t('Swapped {0} and {1} — every week from now on', fmtDate(iso), fmtDate(nextIso)))
+  }
   return <>
     <h3>{fmtDate(iso, true)}</h3>
     <div className="muted small" style={{ marginBottom: 12 }}>{t('Weekly plan:')} {weeklyR ? weeklyR.name : t('Rest')}{hasOvr && <span style={{ color: 'var(--orange)' }}> · {t('changed for this day')}</span>}<br />{t('Sick, missed a day or want a different session? Pick what to train instead.')}</div>
@@ -1743,6 +1763,7 @@ function DayOverride({ iso, close }) {
       {t('You noted:')} {skipNote.reason === 'other' ? skipNote.note : SKIP_REASON_LABEL[skipNote.reason]?.() || skipNote.reason}
     </div>}
     {effRoutine && !loggedThatDay && <Button icon="chevronRight" variant="tinted" onClick={pushToTomorrow} style={{ marginBottom: 12 }}>{t('Push {0} to tomorrow', effRoutine.name)}</Button>}
+    {canSwap && <Button icon="shuffle" variant="tinted" onClick={swapWithTomorrow} style={{ marginBottom: 12 }}>{t('Swap with tomorrow ({0})', nextRoutine ? nextRoutine.name : t('Rest'))}</Button>}
     <div className="list">
       {st.routines.map(r => <div key={r.id} className="item" {...tappable(() => set(r.id))}>
         <span className="lrow-i"><Icon name={glyphOf(r.emoji)} /></span>
